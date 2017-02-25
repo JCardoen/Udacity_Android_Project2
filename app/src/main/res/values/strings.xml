@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">popular_movies_stage1</string>
+    <string name="error_msg">Error could not find any movies. Please check your internet connection and try again.</string>
+</resources>
