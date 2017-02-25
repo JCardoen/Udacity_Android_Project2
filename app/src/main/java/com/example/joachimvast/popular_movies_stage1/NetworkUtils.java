@@ -20,7 +20,7 @@ public class NetworkUtils {
     final static String QUERY_PARAM = "?";
 
 
-    final static String API = "api_key=";
+    final static String API = "api_key=91479965ae747f003a32297215d8b122";
 
     // To insert your own API_KEY, insert it into the KEY variable
     final static String KEY = "";

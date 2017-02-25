@@ -8,10 +8,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,7 +39,7 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, AdapterView.OnItemSelectedListener{
+public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, AdapterView.OnItemSelectedListener, LoaderManager.LoaderCallbacks<String>{
 
 
     // Declare variables
@@ -48,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     String sort;
     Boolean connection;
     ArrayAdapter<String> sAdapter;
+    private static final String SEARCH_URL_API = "";
+    private static final int LOADER_ID = 22;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,8 +132,22 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             // Get our URL, pass on the sort variable
             URL apiUrl = NetworkUtils.buildUrl(this.sort);
 
-            // Make a new MovieQueryTask Object and execute the task
-            new MovieQueryTask().execute(apiUrl);
+            if(TextUtils.isEmpty(apiUrl.toString())){
+                displayError();
+            }
+
+            Bundle queryBundle = new Bundle();
+            queryBundle.putString(SEARCH_URL_API, apiUrl.toString());
+
+
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+        Loader<String> movieSearchLoader = loaderManager.getLoader(LOADER_ID);
+        if (movieSearchLoader == null) {
+            loaderManager.initLoader(LOADER_ID, queryBundle, this);
+        } else {
+            loaderManager.restartLoader(LOADER_ID, queryBundle, this);
+        }
     }
 
     // Display an error
@@ -162,74 +182,104 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
 
-    public class MovieQueryTask extends AsyncTask<URL, Void, String> {
+    @Override
+    public Loader<String> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<String>(this) {
+            String mResult;
 
-        @Override
-        protected String doInBackground(URL... params) {
-            // Get the URL
-            URL api = params[0];
+            @Override
+            protected void onStartLoading() {
 
-            // Initiate results String
-            String results = null;
+                // If no arguments were passed, nothing to do. Just return.
+                if(args == null){
+                    return;
+                }
 
-            // try - catch to catch any IOExceptions
-            try{
-                // Set the value of the results String to the response from the HTTP request
-                results = NetworkUtils.getResponseFromHttpUrl(api);
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-            return results;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(String results) {
-            if (!connection ) {
-                displayError();
-            }
-            else {
-
-                // If the results from our HTTP request are not null, display the data
-                if (results != null && !results.equals("")){
-
-                    // Parse our JSONString
-                    try {
-                        // Make an object of our JSON String
-                        JSONObject object = new JSONObject(results);
-
-                        // Make an array of our JSON Object
-                        JSONArray array = object.getJSONArray("results");
-
-                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
-                        for (int i = 0; i < array.length() ; i++){
-
-                            // Create a movie object with the index of the array
-                            Movie movie = new Movie(array.getJSONObject(i));
-                            Log.d("MyActivity",movie.imagePath);
-
-                            // Add the Movie Object to our ArrayList<Movie> movielist
-                            movielist.add(movie);
-                        }
-                        // Show the JSON data
-                        showData();
-
-                        // Set the list of our adapter
-                        mAdapter.setList(movielist);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                if(mResult != null){
+                    deliverResult(mResult);
                 }
                 else {
-                    // Display error
-                    displayError();
+                    forceLoad();
                 }
+
+
+            }
+
+            @Override
+            public String loadInBackground() {
+                // Get the String using our SEARCH_URL_API key
+                String searchUrlApi = args.getString(SEARCH_URL_API);
+
+                // Initiate results String
+                String results = null;
+
+                // try - catch to catch any IOExceptions
+                try{
+                    // Form a URL object from our cached String
+                    URL api = new URL(searchUrlApi);
+                    // Set the value of the results String to the response from the HTTP request
+                    results = NetworkUtils.getResponseFromHttpUrl(api);
+                    return results;
+                } catch (IOException e){
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            @Override
+            public void deliverResult(String data) {
+                mResult = data;
+                super.deliverResult(data);
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<String> loader, String data) {
+        if (!connection ) {
+            displayError();
+        }
+        else {
+
+            // If the results from our HTTP request are not null, display the data
+            if (data != null && !data.equals("")){
+
+                // Parse our JSONString
+                try {
+                    // Make an object of our JSON String
+                    JSONObject object = new JSONObject(data);
+
+                    // Make an array of our JSON Object
+                    JSONArray array = object.getJSONArray("results");
+
+                    // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                    for (int i = 0; i < array.length() ; i++){
+
+                        // Create a movie object with the index of the array
+                        Movie movie = new Movie(array.getJSONObject(i));
+                        Log.d("MyActivity",movie.imagePath);
+
+                        // Add the Movie Object to our ArrayList<Movie> movielist
+                        movielist.add(movie);
+                    }
+                    // Show the JSON data
+                    showData();
+
+                    // Set the list of our adapter
+                    mAdapter.setList(movielist);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                // Display error
+                displayError();
             }
         }
     }
 
+    @Override
+    public void onLoaderReset(Loader<String> loader) {
+
+    }
 }
