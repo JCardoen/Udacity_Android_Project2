@@ -39,7 +39,7 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, AdapterView.OnItemSelectedListener, LoaderManager.LoaderCallbacks<String>{
+public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, AdapterView.OnItemSelectedListener, LoaderManager.LoaderCallbacks<String[]>{
 
 
     // Declare variables
@@ -53,7 +53,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     Boolean connection;
     ArrayAdapter<String> sAdapter;
     private static final String SEARCH_URL_API = "";
+    private static final String MOVIE_TRAILER_URL = "";
+    private static final String MOVIE_REVIEWS_URL = "";
     private static final int LOADER_ID = 22;
+    private static final String MOVIE_ID = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         intent.putExtra("rating", selected.rating);
         intent.putExtra("release", selected.release);
         intent.putExtra("overview", selected.overview);
+        intent.putExtra("trailers", selected.trailers);
+        intent.putExtra("reviews", selected.reviews);
 
         // Start the activity using the intent
         startActivity(intent);
@@ -129,16 +134,23 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Make a query, called when the Search button is clicked
     public void makeQuery() {
-            // Get our URL, pass on the sort variable
-            URL apiUrl = NetworkUtils.buildUrl(this.sort);
 
+            // Get our URLs, pass on the sort variable for our movies
+            URL apiUrl = NetworkUtils.buildUrl(this.sort);
+            URL trailersUrl = NetworkUtils.buildExtendedUrl("/videos",MOVIE_ID);
+            URL reviewsUrl = NetworkUtils.buildExtendedUrl("/reviews",MOVIE_ID);
+
+            // If the URL to display our movies is empty, we show the error message
             if(TextUtils.isEmpty(apiUrl.toString())){
                 displayError();
             }
 
             Bundle queryBundle = new Bundle();
-            queryBundle.putString(SEARCH_URL_API, apiUrl.toString());
 
+            // We put 3 string variables in our Bundle, for movies, trailers for specific movie and reviews for specific movie
+            queryBundle.putString(SEARCH_URL_API, apiUrl.toString());
+            queryBundle.putString(MOVIE_TRAILER_URL, trailersUrl.toString());
+            queryBundle.putString(MOVIE_REVIEWS_URL, reviewsUrl.toString());
 
 
         LoaderManager loaderManager = getSupportLoaderManager();
@@ -183,9 +195,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
 
     @Override
-    public Loader<String> onCreateLoader(int id, final Bundle args) {
-        return new AsyncTaskLoader<String>(this) {
+    public Loader<String[]> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<String[]>(this) {
             String mResult;
+            String mReviews;
+            String mTrailers;
+
+            String[] mResults = {mResult, mReviews, mReviews};
 
             @Override
             protected void onStartLoading() {
@@ -196,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                 }
 
                 if(mResult != null){
-                    deliverResult(mResult);
+                    deliverResult(mResults);
                 }
                 else {
                     forceLoad();
@@ -206,20 +222,28 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             }
 
             @Override
-            public String loadInBackground() {
+            public String[] loadInBackground() {
                 // Get the String using our SEARCH_URL_API key
                 String searchUrlApi = args.getString(SEARCH_URL_API);
-
+                String trailerUrl = args.getString(MOVIE_TRAILER_URL);
+                String reviewsUrl = args.getString(MOVIE_REVIEWS_URL);
                 // Initiate results String
                 String results = null;
+                String trailerResults = null;
+                String reviewsResults = null;
 
                 // try - catch to catch any IOExceptions
                 try{
                     // Form a URL object from our cached String
                     URL api = new URL(searchUrlApi);
+                    URL trailers = new URL(trailerUrl);
+                    URL reviews = new URL(reviewsUrl);
                     // Set the value of the results String to the response from the HTTP request
                     results = NetworkUtils.getResponseFromHttpUrl(api);
-                    return results;
+                    trailerResults = NetworkUtils.getResponseFromHttpUrl(trailers);
+                    reviewsResults = NetworkUtils.getResponseFromHttpUrl(reviews);
+                    String[] resultsArray = {results, trailerResults, reviewsResults};
+                    return resultsArray;
                 } catch (IOException e){
                     e.printStackTrace();
                     return null;
@@ -227,15 +251,15 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             }
 
             @Override
-            public void deliverResult(String data) {
-                mResult = data;
+            public void deliverResult(String[] data) {
+                mResults = data;
                 super.deliverResult(data);
             }
         };
     }
 
     @Override
-    public void onLoadFinished(Loader<String> loader, String data) {
+    public void onLoadFinished(Loader<String[]> loader, String[] data) {
         if (!connection ) {
             displayError();
         }
@@ -247,11 +271,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                 // Parse our JSONString
                 try {
                     // Make an object of our JSON String
-                    JSONObject object = new JSONObject(data);
+                    JSONObject object = new JSONObject(data[0]);
+                    JSONObject trailers = new JSONObject(data[1]);
+                    JSONObject reviews = new JSONObject(data[2]);
 
                     // Make an array of our JSON Object
                     JSONArray array = object.getJSONArray("results");
-
+                    JSONArray trailersArray = trailers.getJSONArray("results");
+                    JSONArray reviewsArray = reviews.getJSONArray("results");
                     // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
                     for (int i = 0; i < array.length() ; i++){
 
@@ -259,9 +286,20 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                         Movie movie = new Movie(array.getJSONObject(i));
                         Log.d("MyActivity",movie.imagePath);
 
+                        for(int j = 0; j < trailersArray.length(); j ++){
+                            movie.setMovieTrailers(trailersArray.getJSONObject(j));
+                        }
+                        for(int j = 0; j < reviewsArray.length(); j ++){
+                            movie.setMovieReviews(reviewsArray.getJSONObject(j));
+                        }
+
                         // Add the Movie Object to our ArrayList<Movie> movielist
                         movielist.add(movie);
                     }
+
+
+
+
                     // Show the JSON data
                     showData();
 
@@ -279,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
     @Override
-    public void onLoaderReset(Loader<String> loader) {
+    public void onLoaderReset(Loader<String[]> loader) {
 
     }
 }
