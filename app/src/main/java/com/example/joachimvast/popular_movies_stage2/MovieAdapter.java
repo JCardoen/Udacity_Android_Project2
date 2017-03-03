@@ -1,6 +1,5 @@
-package com.example.joachimvast.popular_movies_stage1;
+package com.example.joachimvast.popular_movies_stage2;
 
-import android.app.Application;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;

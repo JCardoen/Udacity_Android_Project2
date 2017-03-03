@@ -1,9 +1,8 @@
-package com.example.joachimvast.popular_movies_stage1;
+package com.example.joachimvast.popular_movies_stage2;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
 import android.widget.ImageView;
 import android.widget.TextView;
 

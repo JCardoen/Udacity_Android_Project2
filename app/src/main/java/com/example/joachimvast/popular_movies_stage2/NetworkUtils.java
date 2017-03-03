@@ -1,4 +1,4 @@
-package com.example.joachimvast.popular_movies_stage1;
+package com.example.joachimvast.popular_movies_stage2;
 
 import android.net.Uri;
 
@@ -18,6 +18,8 @@ public class NetworkUtils {
     // This is our preconfigured base URL
     final static String BASE_URL = "http://api.themoviedb.org/3/movie/";
     final static String QUERY_PARAM = "?";
+
+
     final static String API = "api_key=";
 
     // To insert your own API_KEY, insert it into the KEY variable
@@ -25,23 +27,6 @@ public class NetworkUtils {
 
     public static URL buildUrl(String sort) {
     String URL = BASE_URL + sort + QUERY_PARAM + API + KEY;
-        // Built our URI
-        Uri builtUri = Uri.parse(URL).buildUpon()
-                .build();
-        URL url = null;
-
-        // Try to form a URL using the toString() method from the URL class
-        try {
-            url = new URL(builtUri.toString());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        return url;
-    }
-
-    public static URL buildExtendedUrl(String infoMovie, String id){
-        String URL = BASE_URL + id + infoMovie + QUERY_PARAM + API + KEY;
         // Built our URI
         Uri builtUri = Uri.parse(URL).buildUpon()
                 .build();
