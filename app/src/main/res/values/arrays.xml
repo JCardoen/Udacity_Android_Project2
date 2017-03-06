@@ -3,10 +3,12 @@
     <array name="sorting_labels">
         <item>@string/popular_label</item>
         <item>@string/top_rated_label</item>
+        <item>@string/favourites_label</item>
     </array>
 
     <array name="sorting_keys">
         <item>@string/popular_key</item>
         <item>@string/top_rated_key</item>
+        <item>@string/favourites_key</item>
     </array>
 </resources>

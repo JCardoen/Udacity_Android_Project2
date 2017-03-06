@@ -269,7 +269,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Helper method to set our sort variable
     private void loadSortFromPreferences(SharedPreferences sharedPreferences) {
-        this.sort = sharedPreferences.getString(getString(R.string.sort_key), getString(R.string.popular_key));
+
+        // If it sort by favourites, then we do another action then just sort
+        if(sharedPreferences.getString(getString(R.string.favourites_key), "").equals("favourites_key")) {
+
+        } else {
+            this.sort = sharedPreferences.getString(getString(R.string.sort_key), getString(R.string.popular_key));
+        }
     }
 
     // Unregister preference listener
