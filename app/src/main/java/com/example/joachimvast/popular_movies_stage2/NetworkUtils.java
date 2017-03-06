@@ -23,7 +23,7 @@ public class NetworkUtils {
     final static String API = "api_key=";
 
     // To insert your own API_KEY, insert it into the KEY variable
-    final static String KEY = "";
+    final static String KEY = "91479965ae747f003a32297215d8b122";
 
     public static URL buildUrl(String sort) {
     String URL = BASE_URL + sort + QUERY_PARAM + API + KEY;

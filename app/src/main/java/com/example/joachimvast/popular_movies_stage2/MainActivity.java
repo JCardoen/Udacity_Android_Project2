@@ -3,14 +3,22 @@ package com.example.joachimvast.popular_movies_stage2;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -25,8 +33,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, AdapterView.OnItemSelectedListener{
-
+public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String> {
 
     // Declare variables
     TextView mError;
@@ -35,9 +42,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     MovieAdapter mAdapter;
     Spinner mSorting;
     ArrayList<Movie> movielist = new ArrayList<Movie>();
-    String sort;
+    String sort = "";
+    String JSON_MOVIES;
+    String API_MOVIE_URL;
     Boolean connection;
     ArrayAdapter<String> sAdapter;
+
+    // Constant int for the our LoaderManager
+    private final int LOADER_ID = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,19 +59,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Reference ID to each variable
         mError = (TextView) findViewById(R.id.tv_error_msg);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_thumb);
-        mSorting = (Spinner) findViewById(R.id.spinner_sorting);
         mScrollview = (ScrollView) findViewById(R.id.sv) ;
-
-        // Make an array of String options for our Spinner
-        String[] sorting = {"Sort by...","Popularity", "Top Rated"};
-
-        // Initialize the adapter of our Spinner
-        sAdapter = new ArrayAdapter<String>(MainActivity.this,
-                android.R.layout.simple_spinner_item,sorting);
-        // Set the adapter of our Spinner
-        sAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mSorting.setAdapter(sAdapter);
-        mSorting.setOnItemSelectedListener(this);
 
         // Create a LayoutManager for the RecyclerView
         GridLayoutManager manager = new GridLayoutManager(this, 3, GridLayoutManager.VERTICAL, false);
@@ -72,9 +72,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mAdapter = new MovieAdapter(this);
         mRecyclerView.setAdapter(mAdapter);
 
-        // Start our Query on default it will display all 'popular' movies
-        makeQuery();
+        // Initialize loadermanager
+        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
+        setupSharedPreferences();
+        makeQuery();
         connection = isOnline();
     }
 
@@ -113,16 +115,29 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Make a query, called when the Search button is clicked
     public void makeQuery() {
-            // Get our URL, pass on the sort variable
-            URL apiUrl = NetworkUtils.buildUrl(this.sort);
 
-            // Make a new MovieQueryTask Object and execute the task
-            new MovieQueryTask().execute(apiUrl);
+        Bundle queryBundle = new Bundle();
+
+        // Get our URL, pass on the sort variable
+        URL apiUrl = NetworkUtils.buildUrl(this.sort);
+
+        queryBundle.putString(API_MOVIE_URL, apiUrl.toString());
+
+
+        LoaderManager ldmanager = getSupportLoaderManager();
+        Loader<String> loader = ldmanager.getLoader(LOADER_ID);
+
+        if(loader == null) {
+            ldmanager.initLoader(LOADER_ID,queryBundle,this);
+        } else {
+            ldmanager.restartLoader(LOADER_ID,queryBundle,this);
+        }
     }
 
     // Display an error
     public void displayError() {
         mRecyclerView.setVisibility(View.INVISIBLE);
+        mError.setText(R.string.error_msg);
         mError.setVisibility(View.VISIBLE);
     }
 
@@ -133,93 +148,154 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
     @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        switch(position) {
+    public Loader<String> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<String>(this) {
 
-            // Set the String value based on what item of spinner was selected
-            case 0: onNothingSelected(parent);
-            case 1: this.sort = "popular"; makeQuery(); break;
-            case 2: this.sort = "top_rated"; makeQuery(); break;
-            default: break;
-        }
-        movielist.clear();
-        mAdapter.notifyDataSetChanged();
+            // Variable to store raw JSON data in
+            String movieJSON;
+
+            @Override
+            protected void onStartLoading() {
+                if(args == null) {
+                    return;
+                }
+
+                if(movieJSON != null) {
+                    deliverResult(movieJSON);
+                }
+                else {
+                    forceLoad();
+                }
+
+                super.onStartLoading();
+            }
+
+            @Override
+            public String loadInBackground() {
+                String moviesString = args.getString(API_MOVIE_URL);
+
+                if(moviesString == null) {
+                    return null;
+                }
+
+                String results = "";
+
+                // try - catch to catch any IOExceptions
+                try{
+                    URL moviesURL = new URL(moviesString);
+                    // Set the value of the results String to the response from the HTTP request
+                    results = NetworkUtils.getResponseFromHttpUrl(moviesURL);
+
+                    // Put the JSON results string into our bundle
+                    args.putString(JSON_MOVIES, results);
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+                return results;
+            }
+
+            @Override
+            public void deliverResult(String data) {
+                movieJSON = data;
+                super.deliverResult(data);
+            }
+        };
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        this.sort = "popular";
-    }
+    public void onLoadFinished(Loader<String> loader, String data) {
+        if(data == null){
+            displayError();
+        } else {
+            // Parse our JSONString
+            try {
+                // Make an object of our JSON String
+                JSONObject object = new JSONObject(data);
 
+                // Make an array of our JSON Object
+                JSONArray array = object.getJSONArray("results");
 
-    public class MovieQueryTask extends AsyncTask<URL, Void, String> {
+                // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                for (int i = 0; i < array.length() ; i++){
 
-        @Override
-        protected String doInBackground(URL... params) {
-            // Get the URL
-            URL api = params[0];
+                    // Create a movie object with the index of the array
+                    Movie movie = new Movie(array.getJSONObject(i));
+                    Log.d("Moviepath",movie.toString());
 
-            // Initiate results String
-            String results = null;
+                    // Add the Movie Object to our ArrayList<Movie> movielist
+                    movielist.add(movie);
+                }
+                // Show the JSON data
+                showData();
 
-            // try - catch to catch any IOExceptions
-            try{
-                // Set the value of the results String to the response from the HTTP request
-                results = NetworkUtils.getResponseFromHttpUrl(api);
-            } catch (IOException e){
+                // Set the list of our adapter
+                mAdapter.setList(movielist);
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
-            return results;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(String results) {
-            if (!connection ) {
-                displayError();
-            }
-            else {
-
-                // If the results from our HTTP request are not null, display the data
-                if (results != null && !results.equals("")){
-
-                    // Parse our JSONString
-                    try {
-                        // Make an object of our JSON String
-                        JSONObject object = new JSONObject(results);
-
-                        // Make an array of our JSON Object
-                        JSONArray array = object.getJSONArray("results");
-
-                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
-                        for (int i = 0; i < array.length() ; i++){
-
-                            // Create a movie object with the index of the array
-                            Movie movie = new Movie(array.getJSONObject(i));
-                            Log.d("MyActivity",movie.imagePath);
-
-                            // Add the Movie Object to our ArrayList<Movie> movielist
-                            movielist.add(movie);
-                        }
-                        // Show the JSON data
-                        showData();
-
-                        // Set the list of our adapter
-                        mAdapter.setList(movielist);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-                else {
-                    // Display error
-                    displayError();
-                }
-            }
         }
     }
 
+    @Override
+    public void onLoaderReset(Loader<String> loader) {
+
+    }
+
+    // Helper method to setup the sharedPreferences
+    private void setupSharedPreferences() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        loadSortFromPreferences(preferences);
+        preferences.registerOnSharedPreferenceChangeListener(this);
+    }
+
+
+    // On changed prefrence we call the helper method
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(key.equals(getString(R.string.sort_key))) {
+            loadSortFromPreferences(sharedPreferences);
+
+            // We clear arraylist
+            movielist.clear();
+
+            // Make a new Query to populate our arraylist object that stores the movies
+            makeQuery();
+
+            // re-populate the recyclerviews using the notifier method on our adapter
+            this.mAdapter.notifyDataSetChanged();
+        }
+    }
+
+
+    // Helper method to set our sort variable
+    private void loadSortFromPreferences(SharedPreferences sharedPreferences) {
+        this.sort = sharedPreferences.getString(getString(R.string.sort_key), getString(R.string.popular_key));
+    }
+
+    // Unregister preference listener
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    // Create the Settingsmenu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.preferences, menu);
+        return true;
+    }
+
+    // If the settings option was selected, open that activity using an intent
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.sorting_settings) {
+            Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
+            startActivity(startSettingsActivity);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

@@ -1,8 +1,11 @@
 package com.example.joachimvast.popular_movies_stage2;
 
 import android.content.Intent;
+import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,6 +23,12 @@ public class Detailed extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailed);
+
+        ActionBar actionBar = this.getSupportActionBar();
+
+        if(actionBar != null){
+            actionBar.setDefaultDisplayHomeAsUpEnabled(true);
+        }
 
         // Reference to the ID of the corresponding view
         mThumbnail = (ImageView) findViewById(R.id.iv_thumbnail);
@@ -44,6 +53,16 @@ public class Detailed extends AppCompatActivity {
         Picasso.with(mThumbnail.getContext())
                 .load(intent.getStringExtra("image_path"))
                 .into(mThumbnail);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if(id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 

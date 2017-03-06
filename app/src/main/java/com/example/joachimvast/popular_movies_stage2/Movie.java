@@ -16,6 +16,7 @@ public class Movie {
     public JSONObject movie;
     public String imagePath;
     public String rating;
+    public int id;
 
     // Not-default constructor purely based on JSONObjects that we parse from the JSON String received from our HTTP Response
     public Movie (JSONObject movie){
@@ -28,6 +29,7 @@ public class Movie {
             this.overview = movie.getString("overview");
             this.imagePath = "http://image.tmdb.org/t/p/w300" + movie.getString("poster_path");
             this.rating = movie.getString("vote_average");
+            this.id = movie.getInt("id");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -44,6 +46,7 @@ public class Movie {
                 ", movie=" + movie +
                 ", imagePath='" + imagePath + '\'' +
                 ", rating=" + rating +
+                ", id= " + id +
                 '}';
     }
 }
