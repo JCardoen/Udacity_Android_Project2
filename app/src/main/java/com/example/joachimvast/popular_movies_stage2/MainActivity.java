@@ -1,9 +1,12 @@
 package com.example.joachimvast.popular_movies_stage2;
 
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -25,6 +28,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.example.joachimvast.popular_movies_stage2.Database.MovieContract;
+import com.example.joachimvast.popular_movies_stage2.Database.MovieDBFunctions;
+import com.example.joachimvast.popular_movies_stage2.Database.MovieDbHelper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +41,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String> {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String>, MovieDBFunctions {
 
     // Declare variables
     TextView mError;
@@ -47,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     String API_MOVIE_URL;
     Boolean connection;
     ArrayAdapter<String> sAdapter;
+    private SQLiteDatabase db;
 
     // Constant int for the our LoaderManager
     private final int LOADER_ID = 5;
@@ -74,6 +83,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
         // Initialize loadermanager
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+
+        // Create the database
+        MovieDbHelper helper = new MovieDbHelper(this);
+        db = helper.getWritableDatabase();
 
         setupSharedPreferences();
         makeQuery();
@@ -126,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
         LoaderManager ldmanager = getSupportLoaderManager();
         Loader<String> loader = ldmanager.getLoader(LOADER_ID);
+
+
 
         if(loader == null) {
             ldmanager.initLoader(LOADER_ID,queryBundle,this);
@@ -304,4 +319,63 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void insertMovie(SQLiteDatabase db, boolean popular, boolean top_rated, boolean favourite, Movie m) {
+        ContentValues values = new ContentValues();
+
+        // Inserting in the DB
+        values.put(MovieContract.MovieEntry.COLUMN_MOVIE_TITLE, m.title);
+        values.put(MovieContract.MovieEntry.COLUMN_ID, m.id);
+        values.put(MovieContract.MovieEntry.COLUMN_MOVIE_THUMBNAIL, m.imagePath);
+        values.put(MovieContract.MovieEntry.COLUMN_TOP_RATED, top_rated);
+        values.put(MovieContract.MovieEntry.COLUMN_POPULAR, popular);
+        values.put(MovieContract.MovieEntry.COLUMN_FAVOURITES, favourite);
+
+        db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
+    }
+
+    @Override
+    public Cursor getMoviesPopular(SQLiteDatabase db) {
+        String[] columns = {MovieContract.MovieEntry.COLUMN_MOVIE_THUMBNAIL};
+        return db.query(
+                MovieContract.MovieEntry.TABLE_NAME,
+                columns,
+                "popular IS true",
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Override
+    public Cursor getMoviesTop(SQLiteDatabase db) {
+        String[] columns = {MovieContract.MovieEntry.COLUMN_MOVIE_THUMBNAIL};
+        return db.query(
+                MovieContract.MovieEntry.TABLE_NAME,
+                columns,
+                "top_rated IS true",
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Override
+    public Cursor getMoviesfavourites(SQLiteDatabase db) {
+        String[] columns = {MovieContract.MovieEntry.COLUMN_MOVIE_THUMBNAIL};
+        return db.query(
+                MovieContract.MovieEntry.TABLE_NAME,
+                columns,
+                "favourites IS true",
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+
 }

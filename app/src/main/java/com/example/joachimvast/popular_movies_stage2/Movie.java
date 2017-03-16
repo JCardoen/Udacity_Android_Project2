@@ -33,7 +33,6 @@ public class Movie {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     // Create a toString method (debugging purposes)
