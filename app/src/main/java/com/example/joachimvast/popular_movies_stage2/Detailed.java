@@ -1,7 +1,10 @@
 package com.example.joachimvast.popular_movies_stage2;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,7 +14,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-public class Detailed extends AppCompatActivity {
+public class Detailed extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
 
     // Declare variables
     ImageView mThumbnail;
@@ -65,7 +68,19 @@ public class Detailed extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public Loader<String> onCreateLoader(int id, Bundle args) {
 
+        return null;
+    }
 
+    @Override
+    public void onLoadFinished(Loader<String> loader, String data) {
 
+    }
+
+    @Override
+    public void onLoaderReset(Loader<String> loader) {
+
+    }
 }
