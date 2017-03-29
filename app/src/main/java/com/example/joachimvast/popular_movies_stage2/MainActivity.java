@@ -1,9 +1,9 @@
 package com.example.joachimvast.popular_movies_stage2;
-
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -21,11 +21,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
-
+import com.example.joachimvast.popular_movies_stage2.Database.DBHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -33,15 +32,17 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String> {
 
     // Declare variables
-    TextView mError;
-    ScrollView mScrollview;
-    RecyclerView mRecyclerView;
-    MovieAdapter mAdapter;
-    ArrayList<Movie> movielist = new ArrayList<>();
-    String sort = "";
-    String JSON_MOVIES;
-    String API_MOVIE_URL;
-    Boolean connection;
+    private TextView mError;
+    private ScrollView mScrollview;
+    private RecyclerView mRecyclerView;
+    private MovieAdapter mAdapter;
+    private ArrayList<Movie> movielist = new ArrayList<>();
+    private String sort = "";
+    private String JSON_MOVIES;
+    private String API_MOVIE_URL;
+    private Boolean connection;
+    private SQLiteDatabase db;
+    private DBHelper dbhelper;
 
     // Constant int for the our LoaderManager
     private final int LOADER_ID = 5;
@@ -70,9 +71,23 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Initialize loadermanager
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
+        // Setup Shared preferences
         setupSharedPreferences();
-        makeQuery();
+
+        // Boolean to check whether or not we are connected to the internet
         connection = isOnline();
+
+        // Get a reference to our writable database
+        dbhelper = new DBHelper(this);
+        db = dbhelper.getWritableDatabase();
+
+        // If we don't have connecetion, we'll read from our database
+        if(!connection) {
+            dbhelper.getThumbnails(db, sort);
+        } else {
+            // Make the query (LoaderManager running)
+            makeQuery();
+        }
     }
 
     // Method to check whether or not the user is connected to the internet
@@ -157,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                     return;
                 }
 
+                // If we have a cached movieJSON variable we deliver it
                 if(movieJSON != null) {
                     deliverResult(movieJSON);
                 }
@@ -169,6 +185,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
             @Override
             public String loadInBackground() {
+
+                // Get the cached URL from our Bundle
                 String moviesString = args.getString(API_MOVIE_URL);
 
                 if(moviesString == null) {
