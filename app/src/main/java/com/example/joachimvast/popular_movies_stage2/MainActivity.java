@@ -2,6 +2,7 @@ package com.example.joachimvast.popular_movies_stage2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
@@ -22,6 +23,8 @@ import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.example.joachimvast.popular_movies_stage2.Database.DBHelper;
+import com.example.joachimvast.popular_movies_stage2.ImageSaver.ImageSaver;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -64,9 +67,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mRecyclerView.setLayoutManager(manager);
         mRecyclerView.hasFixedSize();
 
-        // Make a new MovieAdapter object and set the adapter of the RecyclerView to that object
-        mAdapter = new MovieAdapter(this);
-        mRecyclerView.setAdapter(mAdapter);
+
 
         // Initialize loadermanager
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
@@ -83,10 +84,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
         // If we don't have connecetion, we'll read from our database
         if(!connection) {
-            dbhelper.getThumbnails(db, sort);
+            Cursor cursor = dbhelper.getThumbnails(db, sort);
+            mAdapter = new MovieAdapter(this,cursor);
         } else {
             // Make the query (LoaderManager running)
             makeQuery();
+            // Make a new MovieAdapter object and set the adapter of the RecyclerView to that object
+            mAdapter = new MovieAdapter(this);
+            mRecyclerView.setAdapter(mAdapter);
         }
     }
 
@@ -235,7 +240,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
                     // Create a movie object with the index of the array
                     Movie movie = new Movie(array.getJSONObject(i));
-                    Log.d("Moviepath",movie.toString());
 
                     // Add the Movie Object to our ArrayList<Movie> movielist
                     movielist.add(movie);
@@ -264,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
 
-    // On changed prefrence we call the helper method
+    // On changed preference we call the helper method
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if(key.equals(getString(R.string.sort_key))) {

@@ -1,12 +1,14 @@
 package com.example.joachimvast.popular_movies_stage2;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.example.joachimvast.popular_movies_stage2.Database.DBContract;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -20,10 +22,17 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     // Declare variables
     private ArrayList<Movie> mList = new ArrayList<>();
     private itemClickListener clickListener;
+    private Cursor mCursor;
 
     // Create an interface for our clickListener
     public interface itemClickListener {
         void onItemClick(int clickedItemIndex);
+    }
+
+    // Change the constructor of MovieAdapter to accept a onClicklistener
+    public MovieAdapter(itemClickListener listener, Cursor cursor){
+        clickListener = listener;
+        mCursor = cursor;
     }
 
     // Change the constructor of MovieAdapter to accept a onClicklistener
@@ -78,11 +87,26 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     @Override
     public void onBindViewHolder(MovieAdapter.MovieAdapterViewHolder holder, int position) {
-        // Get a Movie object from the ArrayList<Movie> from our Adapter class
-        Movie movie = mList.get(position);
+        String thumbnailURL = "";
+        /* If Cursor is not null , thismeans that the application has no access to the internet
+        /** So we have to display the data from the DB
+        */
 
-        // Get the imagePath of this object
-        String thumbnailURL = movie.imagePath;
+        if(mCursor != null) {
+            if(!mCursor.moveToPosition(position))
+                return;
+
+            thumbnailURL = mCursor.getString(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAILPATH));
+
+        } else {
+
+            // Get a Movie object from the ArrayList<Movie> from our Adapter class
+            Movie movie = mList.get(position);
+            // Get the imagePath of this object
+            thumbnailURL = movie.imagePath;
+        }
+
+
 
         // Use picasso to store the image inside the ImageView
         Picasso.with(holder.mThumbnail.getContext())
@@ -92,6 +116,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     @Override
     public int getItemCount() {
-        return mList.size();
+        return mCursor.getCount();
     }
 }
