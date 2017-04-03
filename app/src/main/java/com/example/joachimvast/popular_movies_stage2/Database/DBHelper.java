@@ -36,12 +36,12 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         // Query to create or table
-        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE" +
+        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE " +
                 DBContract.TABLE_NAME + "(" +
-                DBContract.COLUMN_NAME_ID + "INTEGER PRIMARY KEY," +
-                DBContract.COLUMN_NAME_TITLE + "VARCHAR(45) NOT NULL, " +
-                DBContract.COLUMN_NAME_SORTING + "VARCHAR(20) NOT NULL," +
-                DBContract.COLUMN_NAME_THUMBNAILPATH + "TEXT NOT NULL" + ");";
+                DBContract.COLUMN_NAME_ID + " INTEGER PRIMARY KEY," +
+                DBContract.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
+                DBContract.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL," +
+                DBContract.COLUMN_NAME_THUMBNAIL + " BLOB NOT NULL" + ");";
 
         db.execSQL(SQL_CREATE_MOVIES_TABLE);
     }
@@ -57,7 +57,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getThumbnails(SQLiteDatabase db, String sort) {
-        String[] columns = {DBContract.COLUMN_NAME_THUMBNAILPATH};
+        String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
                 "WHERE" + DBContract.COLUMN_NAME_SORTING + "= " + sort,

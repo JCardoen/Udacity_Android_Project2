@@ -10,4 +10,5 @@
     <string name="popular_key">popular</string>
     <string name="top_rated_key">top_rated</string>
     <string name="favourites_key">favourites</string>
+    <string name="main_activity">Popular Movies</string>
 </resources>

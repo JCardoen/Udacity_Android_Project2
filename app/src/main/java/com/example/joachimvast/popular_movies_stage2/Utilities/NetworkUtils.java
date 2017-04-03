@@ -1,4 +1,4 @@
-package com.example.joachimvast.popular_movies_stage2;
+package com.example.joachimvast.popular_movies_stage2.Utilities;
 
 import android.net.Uri;
 

@@ -1,4 +1,4 @@
-package com.example.joachimvast.popular_movies_stage2;
+package com.example.joachimvast.popular_movies_stage2.Main;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.joachimvast.popular_movies_stage2.Database.DBContract;
+import com.example.joachimvast.popular_movies_stage2.Movie.Movie;
+import com.example.joachimvast.popular_movies_stage2.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -87,7 +89,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     @Override
     public void onBindViewHolder(MovieAdapter.MovieAdapterViewHolder holder, int position) {
-        String thumbnailURL = "";
+        String thumbnailURL ="";
         /* If Cursor is not null , thismeans that the application has no access to the internet
         /** So we have to display the data from the DB
         */
@@ -96,7 +98,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
             if(!mCursor.moveToPosition(position))
                 return;
 
-            thumbnailURL = mCursor.getString(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAILPATH));
+            byte[] thumbnail = mCursor.getBlob(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAIL));
 
         } else {
 
@@ -104,18 +106,19 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
             Movie movie = mList.get(position);
             // Get the imagePath of this object
             thumbnailURL = movie.imagePath;
+
+            // Use picasso to store the image inside the ImageView
+            Picasso.with(holder.mThumbnail.getContext())
+                    .load(thumbnailURL)
+                    .into(holder.mThumbnail);
         }
-
-
-
-        // Use picasso to store the image inside the ImageView
-        Picasso.with(holder.mThumbnail.getContext())
-                .load(thumbnailURL)
-                .into(holder.mThumbnail);
     }
 
     @Override
     public int getItemCount() {
+        if(mCursor == null) {
+            return mList.size();
+        }
         return mCursor.getCount();
     }
 }

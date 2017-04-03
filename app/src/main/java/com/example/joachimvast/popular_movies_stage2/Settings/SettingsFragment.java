@@ -1,4 +1,4 @@
-package com.example.joachimvast.popular_movies_stage2;
+package com.example.joachimvast.popular_movies_stage2.Settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -7,6 +7,8 @@ import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.preference.PreferenceScreen;
+
+import com.example.joachimvast.popular_movies_stage2.R;
 
 import java.util.prefs.Preferences;
 

@@ -1,4 +1,4 @@
-package com.example.joachimvast.popular_movies_stage2;
+package com.example.joachimvast.popular_movies_stage2.Detailed;
 
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -12,14 +12,19 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.joachimvast.popular_movies_stage2.R;
 import com.squareup.picasso.Picasso;
 
-public class Detailed extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
+import java.net.URL;
+
+public class DetailedActivity extends AppCompatActivity  {
 
     // Declare variables
     ImageView mThumbnail;
-    TextView mOverview;
-
+    TextView mSynopsis;
+    TextView mTitle;
+    TextView mRelease;
+    TextView mRating;
 
 
     @Override
@@ -35,22 +40,20 @@ public class Detailed extends AppCompatActivity implements LoaderManager.LoaderC
 
         // Reference to the ID of the corresponding view
         mThumbnail = (ImageView) findViewById(R.id.iv_thumbnail);
-        mOverview = (TextView) findViewById(R.id.tv_overview);
+        mSynopsis = (TextView) findViewById(R.id.tv_synopsis);
+        mTitle = (TextView) findViewById(R.id.tv_title);
+        mRelease = (TextView) findViewById(R.id.tv_release_date);
+        mRating = (TextView) findViewById(R.id.tv_rating);
+
 
         // Get the Intent that invoked the start of this Activity
         Intent intent = getIntent();
 
-        // Declare a variable for the output in our TextView
-        String output = "";
-
-        // Get all the data sent via the Intent
-        output += "Title: " + intent.getStringExtra("title") + "\n";
-        output += "Release date: " + intent.getStringExtra("release") + "\n";
-        output += "Rating (out of 10): " + intent.getStringExtra("rating") + "\n";
-        output += "Overview: " + intent.getStringExtra("overview")+ "\n";
-
         // Set the text of our TextView to the output
-        mOverview.setText(output);
+        mSynopsis.setText(intent.getStringExtra("overview"));
+        mTitle.setText(intent.getStringExtra("title"));
+        mRelease.setText(intent.getStringExtra("release"));
+        mRating.setText(intent.getStringExtra("rating"));
 
         // Create an image and place it in our ImageView variable
         Picasso.with(mThumbnail.getContext())
@@ -68,19 +71,23 @@ public class Detailed extends AppCompatActivity implements LoaderManager.LoaderC
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public Loader<String> onCreateLoader(int id, Bundle args) {
+    // New TrailerTast to fetch the trailers
+    public class TrailerTask extends AsyncTask<URL, Void, String> {
 
-        return null;
-    }
+        @Override
+        protected String doInBackground(URL... params) {
 
-    @Override
-    public void onLoadFinished(Loader<String> loader, String data) {
+            return null;
+        }
 
-    }
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+        }
 
-    @Override
-    public void onLoaderReset(Loader<String> loader) {
-
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
     }
 }

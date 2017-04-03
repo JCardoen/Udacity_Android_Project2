@@ -1,10 +1,9 @@
-package com.example.joachimvast.popular_movies_stage2;
+package com.example.joachimvast.popular_movies_stage2.Main;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -15,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,7 +21,10 @@ import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.example.joachimvast.popular_movies_stage2.Database.DBHelper;
-import com.example.joachimvast.popular_movies_stage2.ImageSaver.ImageSaver;
+import com.example.joachimvast.popular_movies_stage2.Detailed.DetailedActivity;
+import com.example.joachimvast.popular_movies_stage2.R;
+import com.example.joachimvast.popular_movies_stage2.Settings.SettingsActivity;
+import com.example.joachimvast.popular_movies_stage2.Utilities.NetworkUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mScrollview = (ScrollView) findViewById(R.id.sv) ;
 
         // Create a LayoutManager for the RecyclerView
-        GridLayoutManager manager = new GridLayoutManager(this, 3, GridLayoutManager.VERTICAL, false);
+        GridLayoutManager manager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
 
         // Set the LayoutManager for the RecyclerView object
         mRecyclerView.setLayoutManager(manager);
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         Context context = MainActivity.this;
 
         // Get the class of destination activity
-        Class destinationActivity = Detailed.class;
+        Class destinationActivity = DetailedActivity.class;
 
         // Make a new intent
         Intent intent = new Intent(context, destinationActivity);
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Get selected Movie Object to append data to our Intent so the ChildActivity can parse this into a TextView
         Movie selected = movielist.get(clickedItemIndex);
         intent.putExtra("image_path", selected.imagePath);
+        intent.putExtra("id", selected.id);
         intent.putExtra("title", selected.title);
         intent.putExtra("rating", selected.rating);
         intent.putExtra("release", selected.release);
