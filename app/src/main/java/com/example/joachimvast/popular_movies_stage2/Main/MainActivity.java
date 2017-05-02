@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         db = dbhelper.getWritableDatabase();
 
         // If we don't have connection, we'll read from our database
-        if(!connection) {
+        if(!connection || this.sort == getString(R.string.favourites_key)) {
             Cursor cursor = dbhelper.getThumbnails(db, sort);
             mAdapter = new MovieAdapter(this,cursor);
         } else {
@@ -132,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Make a query, called when the Search button is clicked
     public void makeQuery() {
-
         Bundle queryBundle = new Bundle();
 
         // Get our URL, pass on the sort variable
@@ -299,13 +298,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Helper method to set our sort variable
     private void loadSortFromPreferences(SharedPreferences sharedPreferences) {
-
-        // If it sort by favourites, then we do another action then just sort
-        if(sharedPreferences.getString(getString(R.string.favourites_key), "").equals("favourites_key")) {
-
-        } else {
-            this.sort = sharedPreferences.getString(getString(R.string.sort_key), getString(R.string.popular_key));
-        }
+        this.sort = sharedPreferences.getString(getString(R.string.sort_key), getString(R.string.popular_key));
     }
 
     // Unregister preference listener
