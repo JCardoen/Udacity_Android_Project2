@@ -63,7 +63,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
-                "WHERE" + DBContract.COLUMN_NAME_SORTING + "= " + sort,
+                DBContract.COLUMN_NAME_SORTING + "= " + sort,
                 null,
                 null,
                 null,

@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class DetailedActivity extends AppCompatActivity {
 
@@ -41,8 +42,8 @@ public class DetailedActivity extends AppCompatActivity {
     private SQLiteDatabase db;
     private DBHelper dbhelper;
     private final String BASE_URL = "https://www.youtube.com/watch?v=";
-    private String[] trailerKeys;
-    private String[] reviewsContent;
+    private ArrayList<String> trailerKeys = new ArrayList();
+    private ArrayList<String> reviewsContent =  new ArrayList();
     private String id;
 
     @Override
@@ -121,7 +122,7 @@ public class DetailedActivity extends AppCompatActivity {
             URL trailers = params[0][0];
             URL reviews = params[0][1];
 
-            String[] results = null;
+            String[] results = new String[2];
 
             try {
                 results[0] = NetworkUtils.getResponseFromHttpUrl(trailers);
@@ -151,7 +152,7 @@ public class DetailedActivity extends AppCompatActivity {
                     // Iterate over each JSONObject and add them to our trailerKeys array that stores the significant part to open youtube
                     for (int i = 0; i < trailersArray.length(); i++) {
                         // Store the keys for our trailers
-                        trailerKeys[i] = trailersArray.getJSONObject(i).getString("key");
+                        trailerKeys.add(trailersArray.getJSONObject(i).getString("key"));
 
                     }
 
@@ -159,7 +160,7 @@ public class DetailedActivity extends AppCompatActivity {
                     for (int i = 0; i < reviewsArray.length(); i++) {
 
                         // Store the keys for our trailers
-                        reviewsContent[i] = reviewsArray.getJSONObject(i).getString("content");
+                        reviewsContent.add(reviewsArray.getJSONObject(i).getString("content"));
 
                     }
                 } catch (JSONException e) {
