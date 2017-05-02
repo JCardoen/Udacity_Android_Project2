@@ -1,5 +1,6 @@
 package com.example.joachimvast.popular_movies_stage2.Database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -8,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
 
+import com.example.joachimvast.popular_movies_stage2.Main.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -38,10 +40,10 @@ public class DBHelper extends SQLiteOpenHelper {
         // Query to create or table
         String SQL_CREATE_MOVIES_TABLE="CREATE TABLE " +
                 DBContract.TABLE_NAME + "(" +
-                DBContract.COLUMN_NAME_ID + " INTEGER PRIMARY KEY," +
+                DBContract.COLUMN_NAME_ID + " INTEGER PRIMARY KEY NOT NULL," +
                 DBContract.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
                 DBContract.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL," +
-                DBContract.COLUMN_NAME_THUMBNAIL + " BLOB NOT NULL" + ");";
+                DBContract.COLUMN_NAME_THUMBNAIL + " TEXT NOT NULL" + ");";
 
         db.execSQL(SQL_CREATE_MOVIES_TABLE);
     }
@@ -57,6 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getThumbnails(SQLiteDatabase db, String sort) {
+        // Get the thumbnails and store it as a cursor
         String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
@@ -66,5 +69,44 @@ public class DBHelper extends SQLiteOpenHelper {
                 null,
                 null
         );
+    }
+
+    public void insertMovie(Movie movie, SQLiteDatabase db, String sort) {
+
+        // ContentValues instance to pass values into our insert query
+        ContentValues cv = new ContentValues();
+
+        // Put key-value pairs into our ContentValues object
+        cv.put(DBContract.COLUMN_NAME_ID, movie.id);
+        cv.put(DBContract.COLUMN_NAME_SORTING, sort);
+        cv.put(DBContract.COLUMN_NAME_THUMBNAIL, movie.imagePath);
+        cv.put(DBContract.COLUMN_NAME_TITLE, movie.title);
+
+        // Insert query
+        db.insert(DBContract.TABLE_NAME, null, cv);
+    }
+
+    public void markFavourite(String id, SQLiteDatabase db) {
+
+        // ContentValues instance to pass values into our insert query
+        ContentValues cv = new ContentValues();
+
+        // Put key-value pair into our ContentValues object, we want to have sorting as favourite
+        cv.put(DBContract.COLUMN_NAME_SORTING, "favourite");
+
+        // Update query
+        db.update(DBContract.TABLE_NAME, cv, "id="+id, null);
+    }
+
+    public void unmarkFavourite(String id, SQLiteDatabase db) {
+
+        // ContentValues instance to pass values into our insert query
+        ContentValues cv = new ContentValues();
+
+        // Put key-value pair into our ContentValues object, we want to have sorting as favourite
+        cv.put(DBContract.COLUMN_NAME_SORTING, "");
+
+        // Update query
+        db.update(DBContract.TABLE_NAME, cv, "id="+id, null);
     }
 }

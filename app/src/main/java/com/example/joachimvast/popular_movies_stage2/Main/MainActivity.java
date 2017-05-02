@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String> {
 
-    // Declare variables
+    // Declare variables (private)
     private TextView mError;
     private ScrollView mScrollview;
     private RecyclerView mRecyclerView;
@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         dbhelper = new DBHelper(this);
         db = dbhelper.getWritableDatabase();
 
-        // If we don't have connecetion, we'll read from our database
+        // If we don't have connection, we'll read from our database
         if(!connection) {
             Cursor cursor = dbhelper.getThumbnails(db, sort);
             mAdapter = new MovieAdapter(this,cursor);
@@ -138,17 +138,21 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Get our URL, pass on the sort variable
         URL apiUrl = NetworkUtils.buildUrl(this.sort);
 
+        // Put the url in the bundle for caching
         queryBundle.putString(API_MOVIE_URL, apiUrl.toString());
 
-
+        // Get loadermanager as a variable
         LoaderManager ldmanager = getSupportLoaderManager();
+
+        // Get Loader and store in a variable
         Loader<String> loader = ldmanager.getLoader(LOADER_ID);
 
-
-
+        // If loader is not yet initialize, initialize is with this bundle
         if(loader == null) {
             ldmanager.initLoader(LOADER_ID,queryBundle,this);
-        } else {
+        }
+        // Restart if it is already initialized
+        else {
             ldmanager.restartLoader(LOADER_ID,queryBundle,this);
         }
     }
@@ -245,6 +249,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
                     // Add the Movie Object to our ArrayList<Movie> movielist
                     movielist.add(movie);
+
+                    // Insert the Movie object in our DB
+
+                    dbhelper.insertMovie(movie, db, sort);
+
                 }
                 // Show the JSON data
                 showData();

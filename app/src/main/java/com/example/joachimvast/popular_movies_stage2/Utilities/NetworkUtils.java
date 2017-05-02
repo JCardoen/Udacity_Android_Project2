@@ -42,13 +42,32 @@ public class NetworkUtils {
         return url;
     }
 
-    /**
-     * This method returns the entire result from the HTTP response.
-     *
-     * @param url The URL to fetch the HTTP response from.
-     * @return The contents of the HTTP response.
-     * @throws IOException Related to network and stream reading
-     */
+    // Different function to build our extended info URL
+    public static URL extendedURL(String id, String type) {
+        String URL = BASE_URL + id + "/" + type + QUERY_PARAM + API + KEY;
+        // Built our URI
+        Uri builtUri = Uri.parse(URL).buildUpon()
+                .build();
+        URL url = null;
+
+        // Try to form a URL using the toString() method from the URL class
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return url;
+    }
+
+
+        /**
+         * This method returns the entire result from the HTTP response.
+         *
+         * @param url The URL to fetch the HTTP response from.
+         * @return The contents of the HTTP response.
+         * @throws IOException Related to network and stream reading
+         */
     public static String getResponseFromHttpUrl(URL url) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {

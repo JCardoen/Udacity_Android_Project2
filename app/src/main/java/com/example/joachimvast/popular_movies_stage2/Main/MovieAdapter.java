@@ -9,8 +9,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.joachimvast.popular_movies_stage2.Database.DBContract;
-import com.example.joachimvast.popular_movies_stage2.Movie.Movie;
+
 import com.example.joachimvast.popular_movies_stage2.R;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -31,13 +32,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         void onItemClick(int clickedItemIndex);
     }
 
-    // Change the constructor of MovieAdapter to accept a onClicklistener
+    // Change the constructor of MovieAdapter to accept an onClicklistener and a Cursor object
     public MovieAdapter(itemClickListener listener, Cursor cursor){
         clickListener = listener;
         mCursor = cursor;
     }
 
-    // Change the constructor of MovieAdapter to accept a onClicklistener
+    // Change the constructor of MovieAdapter to accept an onClicklistener
     public MovieAdapter(itemClickListener listener){
         clickListener = listener;
     }
@@ -90,15 +91,22 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     @Override
     public void onBindViewHolder(MovieAdapter.MovieAdapterViewHolder holder, int position) {
         String thumbnailURL ="";
-        /* If Cursor is not null , thismeans that the application has no access to the internet
-        /** So we have to display the data from the DB
+        /* If Cursor is not null , this means that the application has no access to the internet
+        /** So we have to display the data from the DB and we use Picasso's caching to display the thumbnail
+        /** Picasso has default caching enabled and we should just pass in the URL
         */
 
         if(mCursor != null) {
-            if(!mCursor.moveToPosition(position))
+            if(!mCursor.moveToPosition(position)) {
                 return;
+            }
 
-            byte[] thumbnail = mCursor.getBlob(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAIL));
+            thumbnailURL = mCursor.getString(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAIL));
+            // Use picasso to store the image inside the ImageView
+            Picasso.with(holder.mThumbnail.getContext())
+                    .load(thumbnailURL)
+                    .networkPolicy(NetworkPolicy.OFFLINE)
+                    .into(holder.mThumbnail);
 
         } else {
 

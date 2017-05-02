@@ -22,8 +22,8 @@ public class Movie {
     public JSONObject movie;
     public String imagePath;
     public String rating;
+    public String cachedImagePath;
     public int id;
-    public byte[] thumbnail;
 
     // Not-default constructor purely based on JSONObjects that we parse from the JSON String received from our HTTP Response
     public Movie (JSONObject movie){
@@ -37,7 +37,7 @@ public class Movie {
             this.imagePath = "http://image.tmdb.org/t/p/w500" + movie.getString("poster_path");
             this.rating = movie.getString("vote_average");
             this.id = movie.getInt("id");
-            this.thumbnail = getThumbnail(this.imagePath);
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -57,20 +57,5 @@ public class Movie {
                 ", rating=" + rating +
                 ", id= " + id +
                 '}';
-    }
-
-    private byte[] getThumbnail(String url){
-        try {
-            URL imageUrl = new URL(url);
-            URLConnection ucon = imageUrl.openConnection();
-            InputStream is = ucon.getInputStream();
-            byte[] image = new byte[is.available()];
-            is.read(image);
-
-            return image;
-        } catch (Exception e) {
-            Log.d("ImageManager", "Error: " + e.toString());
-        }
-        return null;
     }
 }
