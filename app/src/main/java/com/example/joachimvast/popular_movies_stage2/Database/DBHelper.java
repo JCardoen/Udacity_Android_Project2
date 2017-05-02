@@ -63,7 +63,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
-                DBContract.COLUMN_NAME_SORTING + " = " + sort,
+                DBContract.COLUMN_NAME_SORTING + " = " + "" + sort + "",
                 null,
                 null,
                 null,
@@ -92,7 +92,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
 
         // Put key-value pair into our ContentValues object, we want to have sorting as favourite
-        cv.put(DBContract.COLUMN_NAME_SORTING, "favourite");
+        cv.put(DBContract.COLUMN_NAME_SORTING, "favourites");
 
         // Update query
         db.update(DBContract.TABLE_NAME, cv, "id="+id, null);

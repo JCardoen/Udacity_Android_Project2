@@ -9,7 +9,7 @@ import android.provider.BaseColumns;
 public class DBContract implements BaseColumns{
 
     // Declare variables for our columns and table name
-    public static final String TABLE_NAME="Movies";
+    public static final String TABLE_NAME="movies";
     public static final String COLUMN_NAME_TITLE="title";
     public static final String COLUMN_NAME_ID="id";
     public static final String COLUMN_NAME_SORTING="sorting";

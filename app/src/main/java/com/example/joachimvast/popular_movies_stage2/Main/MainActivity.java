@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         db = dbhelper.getWritableDatabase();
 
         // If we don't have connection, we'll read from our database
-        if(!connection || this.sort == getString(R.string.favourites_key)) {
+        if(!connection || this.sort.equals("favourites")) {
             Cursor cursor = dbhelper.getThumbnails(db, sort);
             mAdapter = new MovieAdapter(this,cursor);
         } else {

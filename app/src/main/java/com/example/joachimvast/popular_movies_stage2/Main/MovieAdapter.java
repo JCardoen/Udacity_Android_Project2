@@ -100,6 +100,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
             if(!mCursor.moveToPosition(position)) {
                 return;
             }
+            mCursor.moveToPosition(position);
 
             thumbnailURL = mCursor.getString(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAIL));
             // Use picasso to store the image inside the ImageView
