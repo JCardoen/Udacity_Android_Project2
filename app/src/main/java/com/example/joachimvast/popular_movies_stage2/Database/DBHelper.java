@@ -38,7 +38,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         // Query to create or table
-        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE " +
+        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE IF NOT EXISTS" +
                 DBContract.TABLE_NAME + "(" +
                 DBContract.COLUMN_NAME_ID + " INTEGER PRIMARY KEY NOT NULL," +
                 DBContract.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
@@ -63,7 +63,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
-                DBContract.COLUMN_NAME_SORTING + "= " + sort,
+                DBContract.COLUMN_NAME_SORTING + " = " + sort,
                 null,
                 null,
                 null,
@@ -83,7 +83,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put(DBContract.COLUMN_NAME_TITLE, movie.title);
 
         // Insert query
-        db.insert(DBContract.TABLE_NAME, null, cv);
+        db.update(DBContract.TABLE_NAME, cv,  "id=" + movie.id, null);
     }
 
     public void markFavourite(String id, SQLiteDatabase db) {
