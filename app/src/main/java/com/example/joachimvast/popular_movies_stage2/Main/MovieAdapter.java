@@ -3,6 +3,7 @@ package com.example.joachimvast.popular_movies_stage2.Main;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -91,23 +92,19 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     @Override
     public void onBindViewHolder(MovieAdapter.MovieAdapterViewHolder holder, int position) {
         String thumbnailURL ="";
-        /* If Cursor is not null , this means that the application has no access to the internet
-        /** So we have to display the data from the DB and we use Picasso's caching to display the thumbnail
+
+        /* If Cursor is not null , this means that the application fetches the thumbnails from the DB
+        /** We use Picasso's caching to display the thumbnail
         /** Picasso has default caching enabled and we should just pass in the URL
         */
 
         if(mCursor != null) {
-            if(!mCursor.moveToPosition(position)) {
+            if(!mCursor.moveToPosition(position))
                 return;
-            }
-            mCursor.moveToPosition(position);
 
-            thumbnailURL = mCursor.getString(mCursor.getColumnIndex(DBContract.COLUMN_NAME_THUMBNAIL));
-            // Use picasso to store the image inside the ImageView
-            Picasso.with(holder.mThumbnail.getContext())
-                    .load(thumbnailURL)
-                    .networkPolicy(NetworkPolicy.OFFLINE)
-                    .into(holder.mThumbnail);
+            // Fetch the thumbnail from our cursor object
+            thumbnailURL = mCursor.getString(mCursor.getColumnIndex("thumbnail"));
+            Log.d("Debug", thumbnailURL);
 
         } else {
 
@@ -115,12 +112,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
             Movie movie = mList.get(position);
             // Get the imagePath of this object
             thumbnailURL = movie.imagePath;
-
-            // Use picasso to store the image inside the ImageView
-            Picasso.with(holder.mThumbnail.getContext())
-                    .load(thumbnailURL)
-                    .into(holder.mThumbnail);
         }
+
+        // Use picasso to store the image inside the ImageView
+        Picasso.with(holder.mThumbnail.getContext())
+                .load(thumbnailURL)
+                .into(holder.mThumbnail);
     }
 
     @Override

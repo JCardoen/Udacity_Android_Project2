@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
+import android.util.Log;
 
 import com.example.joachimvast.popular_movies_stage2.Main.Movie;
 import com.squareup.picasso.Picasso;
@@ -31,14 +32,14 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION=1;
 
     public DBHelper(Context context) {
-        super(context, DATABASE_NAME,null, DATABASE_VERSION);
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
 
         // Query to create or table
-        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE IF NOT EXISTS" +
+        String SQL_CREATE_MOVIES_TABLE="CREATE TABLE IF NOT EXISTS " +
                 DBContract.TABLE_NAME + "(" +
                 DBContract.COLUMN_NAME_ID + " INTEGER PRIMARY KEY NOT NULL," +
                 DBContract.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
@@ -46,6 +47,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 DBContract.COLUMN_NAME_THUMBNAIL + " TEXT NOT NULL" + ");";
 
         db.execSQL(SQL_CREATE_MOVIES_TABLE);
+        Log.d("Table created", SQL_CREATE_MOVIES_TABLE);
     }
 
     @Override
@@ -63,7 +65,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] columns = {DBContract.COLUMN_NAME_THUMBNAIL};
         return db.query(DBContract.TABLE_NAME,
                 columns,
-                DBContract.COLUMN_NAME_SORTING + " = " + "" + sort + "",
+                DBContract.COLUMN_NAME_SORTING + " = " + "'" + sort + "'",
                 null,
                 null,
                 null,
@@ -83,7 +85,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put(DBContract.COLUMN_NAME_TITLE, movie.title);
 
         // Insert query
-        db.update(DBContract.TABLE_NAME, cv,  "id=" + movie.id, null);
+        db.insert(DBContract.TABLE_NAME,null, cv);
     }
 
     public void markFavourite(String id, SQLiteDatabase db) {

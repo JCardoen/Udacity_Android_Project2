@@ -3,6 +3,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -14,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -83,17 +85,34 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         dbhelper = new DBHelper(this);
         db = dbhelper.getWritableDatabase();
 
-        // If we don't have connection, we'll read from our database
-        if(!connection || this.sort.equals("favourites")) {
+        // If we don't have connection or sort is favourites, we'll read from our database
+        if((!connection)) {
             Cursor cursor = dbhelper.getThumbnails(db, sort);
+            Log.d("Cursor :", DatabaseUtils.dumpCursorToString(cursor));
             mAdapter = new MovieAdapter(this,cursor);
-        } else {
+            mAdapter.notifyDataSetChanged();
+            // Set our adapter
+            mRecyclerView.setAdapter(mAdapter);
+
+        } else if((this.sort.equals(getString(R.string.favourites_key)))) {
+            Cursor cursor = dbhelper.getThumbnails(db, sort);
+            Log.d("Cursor :",  DatabaseUtils.dumpCursorToString(cursor));
+            mAdapter = new MovieAdapter(this,cursor);
+            mAdapter.notifyDataSetChanged();
+            // Set our adapter
+            mRecyclerView.setAdapter(mAdapter);
+        }
+        else {
             // Make the query (LoaderManager running)
             makeQuery();
             // Make a new MovieAdapter object and set the adapter of the RecyclerView to that object
             mAdapter = new MovieAdapter(this);
+            mAdapter.notifyDataSetChanged();
+            // Set our adapter
             mRecyclerView.setAdapter(mAdapter);
         }
+
+        Log.d("DEBUG SORTING", sort);
     }
 
     // Method to check whether or not the user is connected to the internet
@@ -250,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                     movielist.add(movie);
 
                     // Insert the Movie object in our DB
-
                     dbhelper.insertMovie(movie, db, sort);
 
                 }
@@ -304,6 +322,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     // Unregister preference listener
     @Override
     protected void onDestroy() {
+        dbhelper.close();
         super.onDestroy();
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
     }
