@@ -31,6 +31,12 @@
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Main.MainActivity" />
         </activity>
+
+        <!-- Registration for our MoviesContentProvider -->
+        <provider
+            android:authorities="com.example.joachimvast.popular_movies_stage2"
+            android:name="com.example.joachimvast.popular_movies_stage2.Database.MoviesContentProvider"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -3,20 +3,17 @@ package com.example.joachimvast.popular_movies_stage2.Detailed;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.joachimvast.popular_movies_stage2.Database.DBHelper;
+import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbHelper;
 import com.example.joachimvast.popular_movies_stage2.R;
 import com.example.joachimvast.popular_movies_stage2.Utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -26,7 +23,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -40,7 +36,7 @@ public class DetailedActivity extends AppCompatActivity {
     private TextView mRating;
     private Button mButton;
     private SQLiteDatabase db;
-    private DBHelper dbhelper;
+    private MoviesDbHelper dbhelper;
     private final String BASE_URL = "https://www.youtube.com/watch?v=";
     private ArrayList<String> trailerKeys = new ArrayList();
     private ArrayList<String> reviewsContent =  new ArrayList();
@@ -83,7 +79,7 @@ public class DetailedActivity extends AppCompatActivity {
         // Retrieve the id from our intent
         id = intent.getStringExtra("id");
 
-        dbhelper = new DBHelper(this);
+        dbhelper = new MoviesDbHelper(this);
         db = dbhelper.getWritableDatabase();
 
         makeQuery();

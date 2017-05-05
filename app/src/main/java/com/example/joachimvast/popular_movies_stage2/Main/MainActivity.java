@@ -22,7 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import com.example.joachimvast.popular_movies_stage2.Database.DBHelper;
+import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbHelper;
 import com.example.joachimvast.popular_movies_stage2.Detailed.DetailedActivity;
 import com.example.joachimvast.popular_movies_stage2.R;
 import com.example.joachimvast.popular_movies_stage2.Settings.SettingsActivity;
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     private String API_MOVIE_URL;
     private Boolean connection;
     private SQLiteDatabase db;
-    private DBHelper dbhelper;
+    private MoviesDbHelper dbhelper;
 
     // Constant int for the our LoaderManager
     private final int LOADER_ID = 5;
@@ -70,8 +70,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mRecyclerView.setLayoutManager(manager);
         mRecyclerView.hasFixedSize();
 
-
-
         // Initialize loadermanager
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
 
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         connection = isOnline();
 
         // Get a reference to our writable database
-        dbhelper = new DBHelper(this);
+        dbhelper = new MoviesDbHelper(this);
         db = dbhelper.getWritableDatabase();
 
         // If we don't have connection or sort is favourites, we'll read from our database
@@ -91,16 +89,12 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             Log.d("Cursor :", DatabaseUtils.dumpCursorToString(cursor));
             mAdapter = new MovieAdapter(this,cursor);
             mAdapter.notifyDataSetChanged();
-            // Set our adapter
-            mRecyclerView.setAdapter(mAdapter);
 
         } else if((this.sort.equals(getString(R.string.favourites_key)))) {
             Cursor cursor = dbhelper.getThumbnails(db, sort);
             Log.d("Cursor :",  DatabaseUtils.dumpCursorToString(cursor));
             mAdapter = new MovieAdapter(this,cursor);
             mAdapter.notifyDataSetChanged();
-            // Set our adapter
-            mRecyclerView.setAdapter(mAdapter);
         }
         else {
             // Make the query (LoaderManager running)
@@ -108,11 +102,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             // Make a new MovieAdapter object and set the adapter of the RecyclerView to that object
             mAdapter = new MovieAdapter(this);
             mAdapter.notifyDataSetChanged();
-            // Set our adapter
-            mRecyclerView.setAdapter(mAdapter);
         }
 
+        // Set our adapter
+        mRecyclerView.setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
+
         Log.d("DEBUG SORTING", sort);
+        Log.d("String",  getString(R.string.favourites_key));
     }
 
     // Method to check whether or not the user is connected to the internet
@@ -322,9 +319,21 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     // Unregister preference listener
     @Override
     protected void onDestroy() {
+
+        // We close the Movies db
         dbhelper.close();
         super.onDestroy();
+
+        // Unregistering the PreferenceChangeListener
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Restart the LoaderManager
+        getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
     }
 
     // Create the Settingsmenu
