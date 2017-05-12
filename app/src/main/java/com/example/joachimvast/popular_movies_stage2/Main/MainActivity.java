@@ -130,14 +130,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Make a new intent
         Intent intent = new Intent(context, destinationActivity);
 
-        // Get selected Movie Object to append data to our Intent so the ChildActivity can parse this into a TextView
-        Movie selected = movielist.get(clickedItemIndex);
-        intent.putExtra("image_path", selected.imagePath);
-        intent.putExtra("id", selected.id);
-        intent.putExtra("title", selected.title);
-        intent.putExtra("rating", selected.rating);
-        intent.putExtra("release", selected.release);
-        intent.putExtra("overview", selected.overview);
+        //TODO: Use the ID with ContentProvider to display detailed view.
 
         // Start the activity using the intent
         startActivity(intent);
@@ -201,6 +194,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                 String[] selectionSort = {sort};
                 String[] selectionFavourites = {"1"};
                 Log.d("Sorting:", sort);
+                Cursor c = null;
+                Cursor convertToMovieList;
                 try {
                     if (sort.equals(getString(R.string.favourites_key))) {
                         return getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
@@ -340,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return new String[]{resultsPopular,resultsTop};
+            return new String[]{resultsPopular, resultsTop};
         }
 
         @Override

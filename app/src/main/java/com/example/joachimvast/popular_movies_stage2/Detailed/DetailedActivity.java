@@ -44,6 +44,7 @@ public class DetailedActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // TODO: create a new AsyncTask combined with a new RecyclerView and Adapter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailed);
         // Set the content view and store the actionbar as a variable
@@ -68,7 +69,7 @@ public class DetailedActivity extends AppCompatActivity {
         // Set the texts of our TextViews to the output
         mSynopsis.setText("Synopsis :" + "\n" + intent.getStringExtra("overview"));
         mTitle.setText(intent.getStringExtra("title"));
-        mRelease.setText(intent.getStringExtra("release").substring(0, 4));
+        //mRelease.setText(intent.getStringExtra("release").substring(0, 4));
         mRating.setText(intent.getStringExtra("rating"));
 
         // Create an image and place it in our ImageView variable
@@ -82,21 +83,8 @@ public class DetailedActivity extends AppCompatActivity {
         dbhelper = new MoviesDbHelper(this);
         db = dbhelper.getWritableDatabase();
 
-        makeQuery();
     }
 
-    // execute our created task
-    public void makeQuery() {
-        // URL array to pass into our Task
-        URL[] urlList = new URL[2];
-
-        // Build our URLs specifically with the id
-        urlList[0] = NetworkUtils.extendedURL(id, "videos");
-        urlList[1] = NetworkUtils.extendedURL(id, "reviews");
-
-        // Execute Task passing on the array of URL
-        new TrailerTask().execute(urlList);
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -108,69 +96,9 @@ public class DetailedActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // New TrailerTast to fetch the trailers
-    public class TrailerTask extends AsyncTask<URL[], Void, String[]> {
 
-        @Override
-        protected String[] doInBackground(URL[]... params) {
 
-            // Get the passed URLs using the 2D array of params
-            URL trailers = params[0][0];
-            URL reviews = params[0][1];
-
-            String[] results = new String[2];
-
-            try {
-                results[0] = NetworkUtils.getResponseFromHttpUrl(trailers);
-                results[1] = NetworkUtils.getResponseFromHttpUrl(reviews);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return results;
-        }
-
-        @Override
-        protected void onPostExecute(String[] results) {
-            // If the results from our HTTP request are not null, display the data
-            if (results != null && !results.equals("")) {
-
-                // Parse our JSONString
-                try {
-                    // Make an object of our JSON String
-                    JSONObject trailersObject = new JSONObject(results[0]);
-                    JSONObject reviewsObject = new JSONObject(results[1]);
-
-                    // Make an array of our JSON Object
-                    JSONArray trailersArray = trailersObject.getJSONArray("results");
-                    JSONArray reviewsArray = reviewsObject.getJSONArray("results");
-
-                    // Iterate over each JSONObject and add them to our trailerKeys array that stores the significant part to open youtube
-                    for (int i = 0; i < trailersArray.length(); i++) {
-                        // Store the keys for our trailers
-                        trailerKeys.add(trailersArray.getJSONObject(i).getString("key"));
-
-                    }
-
-                    // Iterate over each JSONObject and add them to our reviewsContent array that stores the reviews
-                    for (int i = 0; i < reviewsArray.length(); i++) {
-
-                        // Store the keys for our trailers
-                        reviewsContent.add(reviewsArray.getJSONObject(i).getString("content"));
-
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-    }
-
+//TODO: update code to use ContentProvider and specified ID
     public void markAsFavourite(View view) {
         /*if(mButton.getText() == getString(R.string.add_to_favourites)) {
             dbhelper.markFavourite(id, db);
