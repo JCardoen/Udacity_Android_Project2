@@ -5,10 +5,12 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 /**
  * Created by Joachim on 04/05/2017.
@@ -34,11 +36,12 @@ public class MoviesContentProvider extends ContentProvider {
         final SQLiteDatabase db = helper.getReadableDatabase();
 
         int match = uriMatcher.match(uri);
-
+        String[] columns = {MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL};
         Cursor cursor;
 
         switch(match) {
             case MOVIES:
+
                 cursor = db.query(MoviesDbContract.MovieEntry.TABLE_NAME,
                         projection,
                         selection,
@@ -47,13 +50,14 @@ public class MoviesContentProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+
+                Log.d("Cursor:", DatabaseUtils.dumpCursorToString(cursor));
                 break;
             default:
                 throw new UnsupportedOperationException("Unknow uri :" + uri);
         }
 
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
-
         return cursor;
     }
 
@@ -103,7 +107,7 @@ public class MoviesContentProvider extends ContentProvider {
 
     public static final int MOVIES = 100;
     public static final int MOVIES_BY_ID = 101;
-    public static final int MOVIES_BY_SORTING = 102;
+
 
     private static final UriMatcher uriMatcher = buildUriMatcher();
 
@@ -111,7 +115,6 @@ public class MoviesContentProvider extends ContentProvider {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES, MOVIES);
         uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES + "/#", MOVIES_BY_ID);
-        uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES + "/*", MOVIES_BY_SORTING);
 
         return uriMatcher;
     }

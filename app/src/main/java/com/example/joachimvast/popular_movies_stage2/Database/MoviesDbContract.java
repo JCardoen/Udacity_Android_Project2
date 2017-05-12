@@ -24,5 +24,6 @@ public class MoviesDbContract {
         public static final String COLUMN_NAME_ID = "id";
         public static final String COLUMN_NAME_SORTING = "sorting";
         public static final String COLUMN_NAME_THUMBNAIL = "thumbnail";
+        public static final String COLUMN_NAME_FAVOURITES = "favourite";
     }
 }

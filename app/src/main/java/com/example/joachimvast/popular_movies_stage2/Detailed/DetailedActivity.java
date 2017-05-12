@@ -172,7 +172,7 @@ public class DetailedActivity extends AppCompatActivity {
     }
 
     public void markAsFavourite(View view) {
-        if(mButton.getText() == getString(R.string.add_to_favourites)) {
+        /*if(mButton.getText() == getString(R.string.add_to_favourites)) {
             dbhelper.markFavourite(id, db);
             mButton.setText(getString(R.string.added_to_favourites));
             mButton.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
@@ -181,8 +181,6 @@ public class DetailedActivity extends AppCompatActivity {
             dbhelper.unmarkFavourite(id, db);
             mButton.setText(getString(R.string.add_to_favourites));
             mButton.setBackgroundColor(getResources().getColor(R.color.mainColor));
-        }
-
-
+        }*/
     }
 }

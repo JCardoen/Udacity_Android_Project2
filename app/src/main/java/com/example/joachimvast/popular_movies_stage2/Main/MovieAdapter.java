@@ -18,10 +18,7 @@ import java.util.ArrayList;
  * Created by JoachimVAST on 06/02/2017.
  */
 
-public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder>  {
-
-    // Declare variables
-    private ArrayList<Movie> mList = new ArrayList<>();
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
     private itemClickListener clickListener;
     private Cursor mCursor;
 
@@ -31,25 +28,18 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     }
 
     // Change the constructor of MovieAdapter to accept an onClicklistener and a Cursor object
-    public MovieAdapter(itemClickListener listener, Cursor cursor){
+    public MovieAdapter(itemClickListener listener, Cursor cursor) {
         clickListener = listener;
         mCursor = cursor;
     }
 
     // Change the constructor of MovieAdapter to accept an onClicklistener
-    public MovieAdapter(itemClickListener listener){
+    public MovieAdapter(itemClickListener listener) {
         clickListener = listener;
     }
 
-    // Setter for the ArrayList of movie objects
-    public void setList(ArrayList<Movie> movielist){
-        this.mList = movielist;
 
-        // Notify android engine that the data has changed
-        notifyDataSetChanged();
-    }
-
-    public class MovieAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class MovieAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         // Create an ImageView for Picasso to store the Image
         public ImageView mThumbnail;
@@ -82,34 +72,23 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         LayoutInflater inflater = LayoutInflater.from(context);
         boolean shouldAttachToParentImmediately = false;
 
-        View view = inflater.inflate(layoutId,parent,shouldAttachToParentImmediately);
+        View view = inflater.inflate(layoutId, parent, shouldAttachToParentImmediately);
         return new MovieAdapterViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(MovieAdapter.MovieAdapterViewHolder holder, int position) {
-        String thumbnailURL ="";
 
         /* If Cursor is not null , this means that the application fetches the thumbnails from the DB
         /** We use Picasso's caching to display the thumbnail
         /** Picasso has default caching enabled and we should just pass in the URL
         */
 
-        if(mCursor != null) {
-            if(!mCursor.moveToPosition(position))
-                return;
+        mCursor.moveToPosition(position);
 
-            // Fetch the thumbnail from our cursor object
-            thumbnailURL = mCursor.getString(mCursor.getColumnIndex("thumbnail"));
-            Log.d("Debug", thumbnailURL);
-
-        } else {
-
-            // Get a Movie object from the ArrayList<Movie> from our Adapter class
-            Movie movie = mList.get(position);
-            // Get the imagePath of this object
-            thumbnailURL = movie.imagePath;
-        }
+        // Fetch the thumbnail from our cursor object
+        String thumbnailURL = mCursor.getString(mCursor.getColumnIndex("thumbnail"));
+        Log.d("Debug", thumbnailURL);
 
         // Use picasso to store the image inside the ImageView
         Picasso.with(holder.mThumbnail.getContext())
@@ -120,8 +99,23 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     @Override
     public int getItemCount() {
         if(mCursor == null) {
-            return mList.size();
+            return 0;
         }
         return mCursor.getCount();
+    }
+
+    public Cursor swapCursor(Cursor c) {
+        // check if this cursor is the same as the previous cursor (mCursor)
+        if (mCursor == c) {
+            return null; // bc nothing has changed
+        }
+        Cursor temp = mCursor;
+        this.mCursor = c; // new cursor value assigned
+
+        //check if this is a valid cursor, then update the cursor
+        if (c != null) {
+            this.notifyDataSetChanged();
+        }
+        return temp;
     }
 }

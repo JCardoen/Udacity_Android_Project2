@@ -34,6 +34,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesDbContract.MovieEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY NOT NULL," +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL," +
+                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " INT," +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL + " TEXT NOT NULL" + ");";
 
         db.execSQL(SQL_CREATE_MOVIES_TABLE);
@@ -48,19 +49,6 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
 
         // Reinitialize
         onCreate(db);
-    }
-
-    public Cursor getThumbnails(SQLiteDatabase db, String sort) {
-        // Get the thumbnails and store it as a cursor
-        String[] columns = {MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL};
-        return db.query(MoviesDbContract.MovieEntry.TABLE_NAME,
-                columns,
-                MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + " = " + "'" + sort + "'",
-                null,
-                null,
-                null,
-                null
-        );
     }
 
     public void insertMovie(Movie movie, SQLiteDatabase db, String sort) {
@@ -78,27 +66,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
         db.insert(MoviesDbContract.MovieEntry.TABLE_NAME,null, cv);
     }
 
-    public void markFavourite(String id, SQLiteDatabase db) {
-
-        // ContentValues instance to pass values into our insert query
-        ContentValues cv = new ContentValues();
-
-        // Put key-value pair into our ContentValues object, we want to have sorting as favourite
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING, "favourites");
-
-        // Update query
-        db.update(MoviesDbContract.MovieEntry.TABLE_NAME, cv, "id="+id, null);
-    }
-
-    public void unmarkFavourite(String id, SQLiteDatabase db) {
-
-        // ContentValues instance to pass values into our insert query
-        ContentValues cv = new ContentValues();
-
-        // Put key-value pair into our ContentValues object, we want to have sorting as favourite
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING, "");
-
-        // Update query
-        db.update(MoviesDbContract.MovieEntry.TABLE_NAME, cv, "id="+id, null);
+    public void cleanDb(SQLiteDatabase db) {
+        db.rawQuery("DELETE FROM movies WHERE favourite = 0", null);
     }
 }

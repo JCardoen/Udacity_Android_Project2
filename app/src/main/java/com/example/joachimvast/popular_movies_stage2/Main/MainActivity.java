@@ -1,4 +1,5 @@
 package com.example.joachimvast.popular_movies_stage2.Main;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,6 +8,7 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -22,6 +24,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbContract;
 import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbHelper;
 import com.example.joachimvast.popular_movies_stage2.Detailed.DetailedActivity;
 import com.example.joachimvast.popular_movies_stage2.R;
@@ -31,11 +35,12 @@ import com.example.joachimvast.popular_movies_stage2.Utilities.NetworkUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<String> {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.itemClickListener, SharedPreferences.OnSharedPreferenceChangeListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     // Declare variables (private)
     private TextView mError;
@@ -43,12 +48,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
     private ArrayList<Movie> movielist = new ArrayList<>();
-    private String sort = "";
-    private String JSON_MOVIES;
-    private String API_MOVIE_URL;
+    public String sort = "";
     private Boolean connection;
     private SQLiteDatabase db;
     private MoviesDbHelper dbhelper;
+    Cursor mCursor;
 
     // Constant int for the our LoaderManager
     private final int LOADER_ID = 5;
@@ -61,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Reference ID to each variable
         mError = (TextView) findViewById(R.id.tv_error_msg);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_thumb);
-        mScrollview = (ScrollView) findViewById(R.id.sv) ;
+        mScrollview = (ScrollView) findViewById(R.id.sv);
 
         // Create a LayoutManager for the RecyclerView
         GridLayoutManager manager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
@@ -83,33 +87,26 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         dbhelper = new MoviesDbHelper(this);
         db = dbhelper.getWritableDatabase();
 
-        // If we don't have connection or sort is favourites, we'll read from our database
-        if((!connection)) {
-            Cursor cursor = dbhelper.getThumbnails(db, sort);
-            Log.d("Cursor :", DatabaseUtils.dumpCursorToString(cursor));
-            mAdapter = new MovieAdapter(this,cursor);
-            mAdapter.notifyDataSetChanged();
-
-        } else if((this.sort.equals(getString(R.string.favourites_key)))) {
-            Cursor cursor = dbhelper.getThumbnails(db, sort);
-            Log.d("Cursor :",  DatabaseUtils.dumpCursorToString(cursor));
-            mAdapter = new MovieAdapter(this,cursor);
-            mAdapter.notifyDataSetChanged();
-        }
-        else {
-            // Make the query (LoaderManager running)
-            makeQuery();
-            // Make a new MovieAdapter object and set the adapter of the RecyclerView to that object
-            mAdapter = new MovieAdapter(this);
-            mAdapter.notifyDataSetChanged();
-        }
-
-        // Set our adapter
-        mRecyclerView.setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
+        // Run synchronization
+        runSync();
 
         Log.d("DEBUG SORTING", sort);
-        Log.d("String",  getString(R.string.favourites_key));
+        Log.d("String", getString(R.string.favourites_key));
+
+        mAdapter = new MovieAdapter(this);
+        // Set our adapter
+        mRecyclerView.setAdapter(mAdapter);
+
+        makeQuery();
+    }
+
+    public void runSync() {
+        // Get our URL, pass on the sort variable
+        URL popularUrl = NetworkUtils.buildUrl("popular");
+        URL topUrl = NetworkUtils.buildUrl("top_rated");
+
+        // Make a new MovieQueryTask Object and execute the task
+        new MovieSyncTask().execute(popularUrl, topUrl);
     }
 
     // Method to check whether or not the user is connected to the internet
@@ -148,13 +145,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     // Make a query, called when the Search button is clicked
     public void makeQuery() {
-        Bundle queryBundle = new Bundle();
-
-        // Get our URL, pass on the sort variable
-        URL apiUrl = NetworkUtils.buildUrl(this.sort);
-
-        // Put the url in the bundle for caching
-        queryBundle.putString(API_MOVIE_URL, apiUrl.toString());
 
         // Get loadermanager as a variable
         LoaderManager ldmanager = getSupportLoaderManager();
@@ -162,13 +152,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Get Loader and store in a variable
         Loader<String> loader = ldmanager.getLoader(LOADER_ID);
 
-        // If loader is not yet initialize, initialize is with this bundle
-        if(loader == null) {
-            ldmanager.initLoader(LOADER_ID,queryBundle,this);
+        // If loader is not yet initialize, initialize it
+        if (loader == null) {
+            ldmanager.initLoader(LOADER_ID, null, this);
         }
         // Restart if it is already initialized
         else {
-            ldmanager.restartLoader(LOADER_ID,queryBundle,this);
+            ldmanager.restartLoader(LOADER_ID, null, this);
         }
     }
 
@@ -186,23 +176,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
     @Override
-    public Loader<String> onCreateLoader(int id, final Bundle args) {
-        return new AsyncTaskLoader<String>(this) {
+    public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<Cursor>(this) {
 
             // Variable to store raw JSON data in
-            String movieJSON;
+            Cursor movies;
 
             @Override
             protected void onStartLoading() {
-                if(args == null) {
-                    return;
-                }
 
-                // If we have a cached movieJSON variable we deliver it
-                if(movieJSON != null) {
-                    deliverResult(movieJSON);
-                }
-                else {
+                // When we have a cached Cursor object, deliverResult
+                if (movies != null) {
+                    deliverResult(movies);
+                } else {
                     forceLoad();
                 }
 
@@ -210,78 +196,56 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
             }
 
             @Override
-            public String loadInBackground() {
+            public Cursor loadInBackground() {
+                String[] columns = {MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL};
+                String[] selectionSort = {sort};
+                String[] selectionFavourites = {"1"};
+                Log.d("Sorting:", sort);
+                try {
+                    if (sort.equals(getString(R.string.favourites_key))) {
+                        return getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
+                                columns,
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + "= ?",
+                                selectionFavourites,
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
+                    } else {
+                        return getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
+                                columns,
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + "= ?",
+                                selectionSort,
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
+                    }
 
-                // Get the cached URL from our Bundle
-                String moviesString = args.getString(API_MOVIE_URL);
-
-                if(moviesString == null) {
+                } catch (Exception e) {
+                    Log.e("TAG :", "Failed to asynchronously load data.");
+                    e.printStackTrace();
                     return null;
                 }
-
-                String results = "";
-
-                // try - catch to catch any IOExceptions
-                try{
-                    URL moviesURL = new URL(moviesString);
-                    // Set the value of the results String to the response from the HTTP request
-                    results = NetworkUtils.getResponseFromHttpUrl(moviesURL);
-
-                    // Put the JSON results string into our bundle
-                    args.putString(JSON_MOVIES, results);
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
-                return results;
             }
 
             @Override
-            public void deliverResult(String data) {
-                movieJSON = data;
+            public void deliverResult(Cursor data) {
+                movies = data;
                 super.deliverResult(data);
             }
         };
     }
 
     @Override
-    public void onLoadFinished(Loader<String> loader, String data) {
-        if(data == null){
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (data == null) {
             displayError();
         } else {
-            // Parse our JSONString
-            try {
-                // Make an object of our JSON String
-                JSONObject object = new JSONObject(data);
-
-                // Make an array of our JSON Object
-                JSONArray array = object.getJSONArray("results");
-
-                // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
-                for (int i = 0; i < array.length() ; i++){
-
-                    // Create a movie object with the index of the array
-                    Movie movie = new Movie(array.getJSONObject(i));
-
-                    // Add the Movie Object to our ArrayList<Movie> movielist
-                    movielist.add(movie);
-
-                    // Insert the Movie object in our DB
-                    dbhelper.insertMovie(movie, db, sort);
-
-                }
-                // Show the JSON data
-                showData();
-
-                // Set the list of our adapter
-                mAdapter.setList(movielist);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            // Swap cursor
+            mAdapter.swapCursor(data);
+            Log.d("Cursor:", DatabaseUtils.dumpCursorToString(data));
+            // Show the JSON data
+            showData();
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<String> loader) {
+    public void onLoaderReset(Loader<Cursor> loader) {
 
     }
 
@@ -296,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     // On changed preference we call the helper method
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if(key.equals(getString(R.string.sort_key))) {
+        if (key.equals(getString(R.string.sort_key))) {
             loadSortFromPreferences(sharedPreferences);
 
             // We clear arraylist
@@ -348,11 +312,90 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if(id == R.id.sorting_settings) {
+        if (id == R.id.sorting_settings) {
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
             startActivity(startSettingsActivity);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
+
+    public class MovieSyncTask extends AsyncTask<URL, Void, String[]> {
+
+        @Override
+        protected String[] doInBackground(URL... params) {
+            // Get the URL
+            URL popular = params[0];
+            URL top = params[1];
+
+            // Initiate results String
+            String resultsPopular = null;
+            String resultsTop = null;
+
+            // try - catch to catch any IOExceptions
+            try {
+                // Set the value of the results String to the response from the HTTP request
+                resultsPopular = NetworkUtils.getResponseFromHttpUrl(popular);
+                resultsTop = NetworkUtils.getResponseFromHttpUrl(top);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return new String[]{resultsPopular,resultsTop};
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String[] results) {
+            if (!connection) {
+                displayError();
+            } else {
+
+                // If the results from our HTTP request are not null, display the data
+                if (results != null && !results.equals("")) {
+
+                    // Parse our JSONString
+                    try {
+                        // Make an object of our JSON String
+                        JSONObject objectPop = new JSONObject(results[0]);
+                        JSONObject objectTop = new JSONObject(results[1]);
+
+                        // Make an array of our JSON Object
+                        JSONArray arrayPop = objectPop.getJSONArray("results");
+                        JSONArray arrayTop = objectTop.getJSONArray("results");
+
+                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                        for (int i = 0; i < arrayPop.length(); i++) {
+
+                            // Create a movie object with the index of the array
+                            Movie movie = new Movie(arrayPop.getJSONObject(i));
+                            Log.d("MyActivity", movie.imagePath);
+
+                            dbhelper.insertMovie(movie, db, "popular");
+                        }
+
+                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                        for (int i = 0; i < arrayTop.length(); i++) {
+
+                            // Create a movie object with the index of the array
+                            Movie movie = new Movie(arrayTop.getJSONObject(i));
+                            Log.d("MyActivity", movie.imagePath);
+                            dbhelper.cleanDb(db);
+                            dbhelper.insertMovie(movie, db, "top_rated");
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    // Display error
+                    displayError();
+                }
+            }
+        }
+    }
+
 }
