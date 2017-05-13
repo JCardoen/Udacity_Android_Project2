@@ -109,6 +109,12 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
 
         mCursor.moveToFirst();
         favourized = mCursor.getInt(mCursor.getColumnIndex(MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES));
+
+        if(favourized == 1) {
+            mButton.setText("Unmark as favourite");
+        } else {
+            mButton.setText("Mark as favourite");
+        }
         // Set the texts of our TextViews to the output
         mSynopsis.setText("Synopsis :" + "\n" + mCursor.getString(mCursor.getColumnIndex(MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW)));
         mTitle.setText(mCursor.getString(mCursor.getColumnIndex(MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE)));
@@ -138,7 +144,7 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
 //TODO: update code to use ContentProvider and specified ID
     public void markAsFavourite(View view) {
         ContentValues cv = new ContentValues();
-        Toast mToast = new Toast(this);
+
         if(favourized == 1) {
             cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES, 0);
             db.update(MoviesDbContract.MovieEntry.TABLE_NAME,
@@ -146,6 +152,9 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
                     MoviesDbContract.MovieEntry.COLUMN_NAME_ID + "= ?",
                     new String[] {idMovie}
             );
+            mButton.setText("Mark as favourite");
+            Toast mToast = Toast.makeText(this, "Unmarked as favourite", Toast.LENGTH_LONG);
+            mToast.show();
         }
 
         else {
@@ -155,6 +164,9 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
                     MoviesDbContract.MovieEntry.COLUMN_NAME_ID + "= ?",
                     new String[] {idMovie}
             );
+            mButton.setText("Unmark as favourite");
+            Toast mToast = Toast.makeText(this, "Marked as favourite", Toast.LENGTH_LONG);
+            mToast.show();
         }
 
     }
