@@ -53,6 +53,21 @@ public class MoviesContentProvider extends ContentProvider {
 
                 Log.d("Cursor:", DatabaseUtils.dumpCursorToString(cursor));
                 break;
+            case MOVIE_BY_ID:
+                String id = uri.getPathSegments().get(1);
+                String mSelection = "id = ?";
+                String[] mSelectionsArgs = new String[] {id};
+                cursor = db.query(
+                        MoviesDbContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        mSelection,
+                        mSelectionsArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+
             default:
                 throw new UnsupportedOperationException("Unknow uri :" + uri);
         }
@@ -106,7 +121,7 @@ public class MoviesContentProvider extends ContentProvider {
     }
 
     public static final int MOVIES = 100;
-    public static final int MOVIES_BY_ID = 101;
+    public static final int MOVIE_BY_ID = 101;
 
 
     private static final UriMatcher uriMatcher = buildUriMatcher();
@@ -114,7 +129,7 @@ public class MoviesContentProvider extends ContentProvider {
     public static UriMatcher buildUriMatcher() {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES, MOVIES);
-        uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES + "/#", MOVIES_BY_ID);
+        uriMatcher.addURI(MoviesDbContract.AUTHORITY, MoviesDbContract.PATH_MOVIES + "/#", MOVIE_BY_ID);
 
         return uriMatcher;
     }

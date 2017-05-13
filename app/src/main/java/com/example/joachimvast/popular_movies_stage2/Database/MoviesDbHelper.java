@@ -36,8 +36,8 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " INT, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW + " TEXT, " +
-                MoviesDbContract.MovieEntry.COLUMN_NAME_RATING + " VARCHAR(45), " +
-                MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE + " VARCHAR(20), " +
+                MoviesDbContract.MovieEntry.COLUMN_NAME_RATING + " TEXT, " +
+                MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE + " TEXT, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL + " TEXT NOT NULL" + ");";
 
         db.execSQL(SQL_CREATE_MOVIES_TABLE);

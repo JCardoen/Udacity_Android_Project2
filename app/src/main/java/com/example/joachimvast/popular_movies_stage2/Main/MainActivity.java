@@ -52,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     private Boolean connection;
     private SQLiteDatabase db;
     private MoviesDbHelper dbhelper;
-    Cursor mCursor;
 
     // Constant int for the our LoaderManager
     private final int LOADER_ID = 5;
@@ -90,6 +89,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Run synchronization
         runSync();
 
+        // Make query
+        makeQuery();
+
         Log.d("DEBUG SORTING", sort);
         Log.d("String", getString(R.string.favourites_key));
 
@@ -97,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Set our adapter
         mRecyclerView.setAdapter(mAdapter);
 
-        makeQuery();
+
     }
 
     public void runSync() {
@@ -121,6 +123,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     @Override
     public void onItemClick(int clickedItemIndex) {
 
+        Cursor cursor = mAdapter.getCursor();
+        cursor.moveToPosition(clickedItemIndex);
+
         // Get the parent context
         Context context = MainActivity.this;
 
@@ -129,6 +134,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
         // Make a new intent
         Intent intent = new Intent(context, destinationActivity);
+
+        intent.putExtra("id", cursor.getString(cursor.getColumnIndex(MoviesDbContract.MovieEntry.COLUMN_NAME_ID)));
 
         //TODO: Use the ID with ContentProvider to display detailed view.
 
@@ -168,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mRecyclerView.setVisibility(View.VISIBLE);
     }
 
+
+    // Loader to get a Cursor from our Database containing the information of the movies based on sorting
     @Override
     public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
         return new AsyncTaskLoader<Cursor>(this) {
@@ -190,22 +199,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
             @Override
             public Cursor loadInBackground() {
-                String[] columns = {MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL};
                 String[] selectionSort = {sort};
                 String[] selectionFavourites = {"1"};
                 Log.d("Sorting:", sort);
-                Cursor c = null;
-                Cursor convertToMovieList;
                 try {
                     if (sort.equals(getString(R.string.favourites_key))) {
                         return getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
-                                columns,
+                                null,
                                 MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + "= ?",
                                 selectionFavourites,
                                 MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
                     } else {
                         return getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
-                                columns,
+                                null,
                                 MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + "= ?",
                                 selectionSort,
                                 MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
@@ -241,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
+        getSupportLoaderManager().restartLoader(LOADER_ID,null,this);
     }
 
     // Helper method to setup the sharedPreferences

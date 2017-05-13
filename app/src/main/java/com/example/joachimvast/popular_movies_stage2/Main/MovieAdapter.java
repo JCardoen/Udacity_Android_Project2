@@ -22,6 +22,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     private itemClickListener clickListener;
     private Cursor mCursor;
 
+    public Cursor getCursor() {
+        return mCursor;
+    }
+
     // Create an interface for our clickListener
     public interface itemClickListener {
         void onItemClick(int clickedItemIndex);

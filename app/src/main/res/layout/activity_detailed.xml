@@ -15,11 +15,16 @@
         android:textColor="@color/white"
         android:padding="20dp"
         />
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/iv_thumbnail"
-            />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/iv_thumbnail"
+        />
+    </ScrollView>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
