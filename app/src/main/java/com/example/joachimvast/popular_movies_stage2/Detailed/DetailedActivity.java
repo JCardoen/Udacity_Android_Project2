@@ -14,6 +14,8 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 
 import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbContract;
 import com.example.joachimvast.popular_movies_stage2.Database.MoviesDbHelper;
+import com.example.joachimvast.popular_movies_stage2.Main.Movie;
 import com.example.joachimvast.popular_movies_stage2.R;
 import com.example.joachimvast.popular_movies_stage2.Utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -36,7 +39,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class DetailedActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class DetailedActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, TrailerAdapter.itemClickListener {
 
     // Declare variables
     private ImageView mThumbnail;
@@ -50,6 +53,14 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
     private MoviesDbHelper dbhelper;
     private String idMovie;
     private Cursor mCursor;
+    private TrailerAdapter tAdapter;
+    private ReviewAdapter rAdapter;
+    private TextView mError;
+    private Boolean connection;
+    private RecyclerView trailerRv;
+    private RecyclerView reviewsRv;
+    private ArrayList<Trailer> trailers = new ArrayList();
+    private ArrayList<Review> reviews = new ArrayList();
 
     private static final int LOADER_ID = 78;
 
@@ -73,6 +84,9 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
         mRelease = (TextView) findViewById(R.id.tv_release_date);
         mRating = (TextView) findViewById(R.id.tv_rating);
         mButton = (Button) findViewById(R.id.button_favourize);
+        mError = (TextView) findViewById(R.id.tv_error_msg);
+        trailerRv = (RecyclerView) findViewById(R.id.rv_trailers) ;
+        reviewsRv = (RecyclerView) findViewById(R.id.rv_reviews) ;
 
         // Get the Intent that invoked the start of this Activity
         Intent intent = getIntent();
@@ -80,13 +94,38 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
         // Retrieve the id from our intent
         idMovie = intent.getStringExtra("id");
 
+        // Create a LayoutManager for the RecyclerView
+        LinearLayoutManager m1 = new LinearLayoutManager(this);
+        LinearLayoutManager m2 = new LinearLayoutManager(this);
+
+        // Set the LayoutManager for the RecyclerView object
+        trailerRv.setLayoutManager(m1);
+        trailerRv.hasFixedSize();
+
+        reviewsRv.setLayoutManager(m2);
+        reviewsRv.hasFixedSize();
+
+        connection = NetworkUtils.isOnline(this);
+
         // Get the Database
         dbhelper = new MoviesDbHelper(this);
         db = dbhelper.getWritableDatabase();
 
+        tAdapter = new TrailerAdapter(this);
+        // Set our adapter
+        trailerRv.setAdapter(tAdapter);
+
+        rAdapter = new ReviewAdapter();
+        // Set our adapter
+        reviewsRv.setAdapter(rAdapter);
+
         // run the loader
         runLoader();
+
+        // fetch trailers and reviews
+        fetchExtended();
     }
+
 
     private void runLoader() {
         // Get loadermanager as a variable
@@ -103,6 +142,16 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
         else {
             ldmanager.restartLoader(LOADER_ID, null, this);
         }
+    }
+
+
+    public void fetchExtended() {
+        // Get our URL, pass on the sort variable
+        URL trailersURL = NetworkUtils.extendedURL(idMovie, "videos");
+        URL reviewsURL = NetworkUtils.extendedURL(idMovie, "reviews");
+
+        // Make a new MovieQueryTask Object and execute the task
+        new FetchTask().execute(trailersURL, reviewsURL);
     }
 
     private void displayData() {
@@ -126,6 +175,13 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
         Picasso.with(mThumbnail.getContext())
                 .load(mCursor.getString(mCursor.getColumnIndex(MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL)))
                 .into(mThumbnail);
+
+        mError.setVisibility(View.INVISIBLE);
+    }
+
+    private void displayError() {
+        mError.setText("Error fetching reviews and trailers, make sure your internet connection is online");
+        mError.setVisibility(View.VISIBLE);
     }
 
 
@@ -228,5 +284,93 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         getSupportLoaderManager().restartLoader(LOADER_ID,null,this);
+    }
+
+    @Override
+    public void onTrailerClick(int clickedItemIndex) {
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(trailers.get(clickedItemIndex).getTrailerURL())));
+    }
+
+    public class FetchTask extends AsyncTask<URL, Void, String[]> {
+
+        @Override
+        protected String[] doInBackground(URL... params) {
+            // Get the URL
+            URL trailers = params[0];
+            URL reviews = params[1];
+
+            // Initiate results String
+            String resultsTrailers = null;
+            String resultsreviews = null;
+
+            // try - catch to catch any IOExceptions
+            try {
+                // Set the value of the results String to the response from the HTTP request
+                resultsTrailers = NetworkUtils.getResponseFromHttpUrl(trailers);
+                resultsreviews = NetworkUtils.getResponseFromHttpUrl(reviews);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return new String[]{resultsTrailers, resultsreviews};
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String[] results) {
+            if (!connection) {
+                displayError();
+            } else {
+
+                // If the results from our HTTP request are not null, display the data
+                if (results != null && !results.equals("")) {
+
+                    // Parse our JSONString
+                    try {
+                        // Make an object of our JSON String
+                        JSONObject objectTrailers = new JSONObject(results[0]);
+                        JSONObject objectReviews = new JSONObject(results[1]);
+
+                        // Make an array of our JSON Object
+                        JSONArray arrayTrailers = objectTrailers.getJSONArray("results");
+                        JSONArray arrayReviews = objectReviews.getJSONArray("results");
+
+                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                        for (int i = 0; i < arrayTrailers.length(); i++) {
+
+                            // Create a movie object with the index of the array
+                            Trailer trailer = new Trailer(arrayTrailers.getJSONObject(i));
+                            trailers.add(trailer);
+                        }
+
+                        // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
+                        for (int i = 0; i < arrayReviews.length(); i++) {
+
+                            // Create a movie object with the index of the array
+                            Review review = new Review(arrayReviews.getJSONObject(i));
+                            reviews.add(review);
+                        }
+
+                        rAdapter.setList(reviews);
+                        tAdapter.setList(trailers);
+
+                        rAdapter.notifyDataSetChanged();
+                        tAdapter.notifyDataSetChanged();
+
+                        Log.d("Trailers", trailers.toString());
+                        Log.d("Reviews", reviews.toString());
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    // Display error
+                    displayError();
+                }
+            }
+        }
     }
 }

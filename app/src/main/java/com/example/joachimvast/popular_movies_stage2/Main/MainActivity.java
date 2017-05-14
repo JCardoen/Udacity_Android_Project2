@@ -79,8 +79,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         // Setup Shared preferences
         setupSharedPreferences();
 
-        // Boolean to check whether or not we are connected to the internet
-        connection = isOnline();
+        connection = NetworkUtils.isOnline(this);
 
         // Get a reference to our writable database
         dbhelper = new MoviesDbHelper(this);
@@ -98,8 +97,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         mAdapter = new MovieAdapter(this);
         // Set our adapter
         mRecyclerView.setAdapter(mAdapter);
-
-
     }
 
     public void runSync() {
@@ -109,14 +106,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
         // Make a new MovieQueryTask Object and execute the task
         new MovieSyncTask().execute(popularUrl, topUrl);
-    }
-
-    // Method to check whether or not the user is connected to the internet
-    public boolean isOnline() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     // Method for handling click on a thumbnail
