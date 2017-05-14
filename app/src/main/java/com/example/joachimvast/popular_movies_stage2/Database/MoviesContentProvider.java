@@ -36,7 +36,7 @@ public class MoviesContentProvider extends ContentProvider {
         final SQLiteDatabase db = helper.getReadableDatabase();
 
         int match = uriMatcher.match(uri);
-        String[] columns = {MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL};
+
         Cursor cursor;
 
         switch(match) {
@@ -53,6 +53,7 @@ public class MoviesContentProvider extends ContentProvider {
 
                 Log.d("Cursor:", DatabaseUtils.dumpCursorToString(cursor));
                 break;
+
             case MOVIE_BY_ID:
                 String id = uri.getPathSegments().get(1);
                 String mSelection = "id = ?";
@@ -66,8 +67,7 @@ public class MoviesContentProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
-
-
+                break;
             default:
                 throw new UnsupportedOperationException("Unknow uri :" + uri);
         }
@@ -93,7 +93,7 @@ public class MoviesContentProvider extends ContentProvider {
 
         switch(match) {
             case MOVIES:
-                long id = db.insert(MoviesDbContract.MovieEntry.TABLE_NAME, null, values);
+                long id = db.replace(MoviesDbContract.MovieEntry.TABLE_NAME, null, values);
 
                 if(id > 0) {
                     returnUri = ContentUris.withAppendedId(MoviesDbContract.MovieEntry.CONTENT_URI, id);
@@ -112,7 +112,26 @@ public class MoviesContentProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        final SQLiteDatabase db = helper.getWritableDatabase();
+
+        int match = uriMatcher.match(uri);
+
+        Uri returnUri;
+        int id;
+        switch(match) {
+
+            case MOVIES:
+                id = db.delete(MoviesDbContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if(id != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return id;
     }
 
     @Override

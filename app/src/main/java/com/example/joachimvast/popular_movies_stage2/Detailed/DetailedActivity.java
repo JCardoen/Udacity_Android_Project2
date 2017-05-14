@@ -251,12 +251,11 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
             @Override
             public Cursor loadInBackground() {
                 try {
-                    Uri uri = MoviesDbContract.MovieEntry.CONTENT_URI.buildUpon().build();
-                     return  getContentResolver().query(uri,
+                     return  getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI.buildUpon().appendPath(idMovie).build(),
                                 null,
-                                MoviesDbContract.MovieEntry.COLUMN_NAME_ID + "= ?",
-                                new String[] {idMovie},
-                                MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
+                                null,
+                                null,
+                                null);
 
                 } catch (Exception e) {
                     Log.e("TAG :", "Failed to asynchronously load data.");

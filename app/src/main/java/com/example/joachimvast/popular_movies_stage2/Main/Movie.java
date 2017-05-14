@@ -22,7 +22,6 @@ public class Movie {
     public JSONObject movie;
     public String imagePath;
     public String rating;
-    public String cachedImagePath;
     public String id;
 
     // Not-default constructor purely based on JSONObjects that we parse from the JSON String received from our HTTP Response

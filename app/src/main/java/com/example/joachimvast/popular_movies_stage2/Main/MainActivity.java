@@ -1,5 +1,6 @@
 package com.example.joachimvast.popular_movies_stage2.Main;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -100,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
     }
 
     public void runSync() {
+
         // Get our URL, pass on the sort variable
         URL popularUrl = NetworkUtils.buildUrl("popular");
         URL topUrl = NetworkUtils.buildUrl("top_rated");
@@ -357,14 +359,30 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                         JSONArray arrayPop = objectPop.getJSONArray("results");
                         JSONArray arrayTop = objectTop.getJSONArray("results");
 
+                        // First we delete our old records
+                        getContentResolver().delete(MoviesDbContract.MovieEntry.CONTENT_URI,
+                                "favourite = ?",
+                                new String[]{"0"}
+                        );
                         // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
                         for (int i = 0; i < arrayPop.length(); i++) {
 
                             // Create a movie object with the index of the array
                             Movie movie = new Movie(arrayPop.getJSONObject(i));
                             Log.d("MyActivity", movie.imagePath);
+                            // ContentValues instance to pass values into our insert query
+                            ContentValues cv = new ContentValues();
 
-                            dbhelper.insertMovie(movie, db, "popular");
+                            // Put key-value pairs into our ContentValues object
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_ID, movie.id);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING, "popular");
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL, movie.imagePath);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE, movie.title);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW, movie.overview);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RATING, movie.rating);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE, movie.release);
+
+                            getContentResolver().insert(MoviesDbContract.MovieEntry.CONTENT_URI, cv);
                         }
 
                         // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
@@ -373,8 +391,20 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                             // Create a movie object with the index of the array
                             Movie movie = new Movie(arrayTop.getJSONObject(i));
                             Log.d("MyActivity", movie.imagePath);
-                            dbhelper.cleanDb(db);
-                            dbhelper.insertMovie(movie, db, "top_rated");
+
+                            // ContentValues instance to pass values into our insert query
+                            ContentValues cv = new ContentValues();
+
+                            // Put key-value pairs into our ContentValues object
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_ID, movie.id);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING, "top_rated");
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL, movie.imagePath);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE, movie.title);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW, movie.overview);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RATING, movie.rating);
+                            cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE, movie.release);
+
+                            getContentResolver().insert(MoviesDbContract.MovieEntry.CONTENT_URI, cv);
                         }
 
                     } catch (JSONException e) {

@@ -31,7 +31,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
         // Query to create or table
         String SQL_CREATE_MOVIES_TABLE="CREATE TABLE IF NOT EXISTS " +
                 MoviesDbContract.MovieEntry.TABLE_NAME + "(" +
-                MoviesDbContract.MovieEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY NOT NULL, " +
+                MoviesDbContract.MovieEntry.COLUMN_NAME_ID + " INTEGER NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " INT, " +
@@ -54,25 +54,4 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void insertMovie(Movie movie, SQLiteDatabase db, String sort) {
-
-        // ContentValues instance to pass values into our insert query
-        ContentValues cv = new ContentValues();
-
-        // Put key-value pairs into our ContentValues object
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_ID, movie.id);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING, sort);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL, movie.imagePath);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE, movie.title);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW, movie.overview);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RATING, movie.rating);
-        cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE, movie.release);
-
-        // Insert query
-        db.insert(MoviesDbContract.MovieEntry.TABLE_NAME,null, cv);
-    }
-
-    public void cleanDb(SQLiteDatabase db) {
-        db.rawQuery("DELETE FROM movies WHERE favourite = 0", null);
-    }
 }
