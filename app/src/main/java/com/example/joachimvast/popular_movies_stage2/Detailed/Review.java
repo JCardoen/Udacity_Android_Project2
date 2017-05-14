@@ -23,4 +23,12 @@ public class Review {
     public String toString() {
         return this.author + ": \n" + this.content;
     }
+
+    public String getAuthor() {
+        return "Author" + this.author;
+    }
+
+    public String getContent() {
+        return this.content;
+    }
 }
