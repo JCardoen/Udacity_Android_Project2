@@ -180,7 +180,6 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
     }
 
     private void displayError() {
-        mError.setText("Error fetching reviews and trailers, make sure your internet connection is online");
         mError.setVisibility(View.VISIBLE);
     }
 
@@ -203,25 +202,25 @@ public class DetailedActivity extends AppCompatActivity implements LoaderManager
 
         if(favourized == 1) {
             cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES, 0);
-            db.update(MoviesDbContract.MovieEntry.TABLE_NAME,
+            getContentResolver().update(MoviesDbContract.MovieEntry.CONTENT_URI.buildUpon().appendPath(idMovie).build(),
                     cv,
                     MoviesDbContract.MovieEntry.COLUMN_NAME_ID + "= ?",
                     new String[] {idMovie}
             );
             mButton.setText("Mark as favourite");
-            Toast mToast = Toast.makeText(this, "Unmarked as favourite", Toast.LENGTH_LONG);
+            Toast mToast = Toast.makeText(this, "Unmarked as favourite", Toast.LENGTH_SHORT);
             mToast.show();
         }
 
         else {
             cv.put(MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES, 1);
-            db.update(MoviesDbContract.MovieEntry.TABLE_NAME,
+            getContentResolver().update(MoviesDbContract.MovieEntry.CONTENT_URI.buildUpon().appendPath(idMovie).build(),
                     cv,
                     MoviesDbContract.MovieEntry.COLUMN_NAME_ID + "= ?",
                     new String[] {idMovie}
             );
             mButton.setText("Unmark as favourite");
-            Toast mToast = Toast.makeText(this, "Marked as favourite", Toast.LENGTH_LONG);
+            Toast mToast = Toast.makeText(this, "Marked as favourite", Toast.LENGTH_SHORT);
             mToast.show();
         }
 

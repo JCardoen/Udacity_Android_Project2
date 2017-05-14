@@ -34,7 +34,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesDbContract.MovieEntry.COLUMN_NAME_ID + " INTEGER NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_TITLE + " VARCHAR(45) NOT NULL, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_SORTING + " VARCHAR(20) NOT NULL, " +
-                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " INT, " +
+                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " STRING, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_OVERVIEW + " TEXT, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_RATING + " TEXT, " +
                 MoviesDbContract.MovieEntry.COLUMN_NAME_RELEASE + " TEXT, " +

@@ -87,7 +87,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
         db = dbhelper.getWritableDatabase();
 
         // Run synchronization
-        runSync();
+        if(connection) {
+            runSync();
+        }
 
         // Make query
         makeQuery();
@@ -361,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
 
                         // First we delete our old records
                         getContentResolver().delete(MoviesDbContract.MovieEntry.CONTENT_URI,
-                                "favourite = ?",
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + " = ?",
                                 new String[]{"0"}
                         );
                         // Iterate over each JSONObject and add them to our ArrayList<Movie> variable
@@ -407,6 +409,12 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.item
                             getContentResolver().insert(MoviesDbContract.MovieEntry.CONTENT_URI, cv);
                         }
 
+                        Cursor check = getContentResolver().query(MoviesDbContract.MovieEntry.CONTENT_URI,
+                                null,
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_FAVOURITES + "= ?",
+                                new String[]{"1"},
+                                MoviesDbContract.MovieEntry.COLUMN_NAME_THUMBNAIL);
+                        Log.d("Debug favourites", DatabaseUtils.dumpCursorToString(check));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

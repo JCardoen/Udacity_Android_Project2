@@ -13,4 +13,5 @@
     <string name="main_activity">Popular Movies</string>
     <string name="add_to_favourites">Mark as favourite</string>
     <string name="added_to_favourites">Unmark as favourite</string>
+    <string name="error_fetching_extended">Error fetching reviews and trailers, make sure your internet connection is online</string>
 </resources>

@@ -12,6 +12,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
+
 /**
  * Created by Joachim on 04/05/2017.
  */
@@ -93,9 +95,10 @@ public class MoviesContentProvider extends ContentProvider {
 
         switch(match) {
             case MOVIES:
-                long id = db.replace(MoviesDbContract.MovieEntry.TABLE_NAME, null, values);
 
-                if(id > 0) {
+                long id = db.insertWithOnConflict(MoviesDbContract.MovieEntry.TABLE_NAME,null, values,CONFLICT_IGNORE);
+
+                if(id < 0) {
                     returnUri = ContentUris.withAppendedId(MoviesDbContract.MovieEntry.CONTENT_URI, id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
@@ -116,7 +119,6 @@ public class MoviesContentProvider extends ContentProvider {
 
         int match = uriMatcher.match(uri);
 
-        Uri returnUri;
         int id;
         switch(match) {
 
@@ -136,7 +138,31 @@ public class MoviesContentProvider extends ContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        final SQLiteDatabase db = helper.getWritableDatabase();
+
+        int match = uriMatcher.match(uri);
+        String movie = uri.getPathSegments().get(1);
+        String mSelection = "id = ?";
+        String[] mSelectionsArgs = new String[] {movie};
+        int id;
+        switch(match) {
+
+            case MOVIE_BY_ID:
+                id = db.update(MoviesDbContract.MovieEntry.TABLE_NAME,
+                        values,
+                        mSelection,
+                        mSelectionsArgs
+                );
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if(id != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return id;
     }
 
     public static final int MOVIES = 100;
