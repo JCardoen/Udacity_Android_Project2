@@ -55,10 +55,12 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
     }
 
     public class TrailerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
         public TextView mTrailers;
+
         public TrailerViewHolder(View itemView) {
+
             super(itemView);
-            // Reference ImageView to ID
             this.mTrailers = (TextView) itemView.findViewById(R.id.rv_trailers);
 
             // Set the onclick listener

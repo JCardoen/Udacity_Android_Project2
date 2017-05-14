@@ -11,8 +11,11 @@ import org.json.JSONObject;
 public class Trailer {
     private String name;
     private String key;
+
+    // Base url to view youtube videos
     private final String BASE_URL = "https://www.youtube.com/watch?v=";
 
+    // Non-default constructor that parses the JSONObject
     public Trailer(JSONObject obj) {
         try {
             this.name = obj.getString("name");

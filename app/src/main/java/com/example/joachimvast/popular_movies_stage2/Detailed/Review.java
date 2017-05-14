@@ -11,6 +11,8 @@ import org.json.JSONObject;
 public class Review {
     String author;
     String content;
+
+    // Non-default constructor that parses the JSONObject
     public Review(JSONObject obj) {
         try {
             this.author = obj.getString("author");
